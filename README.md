@@ -1,52 +1,245 @@
-# A11 — Harmonization of MODIS and VIIRS Hot Spots
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="web-hackathon/public/brand/ember-atlas.svg">
+    <img src="web-hackathon/public/brand/ember-atlas-light.svg" alt="Ember Atlas" width="420">
+  </picture>
+</p>
 
-**2026 NASA Space Apps Challenge** · Team **A11** · Monterrey
-Challenge: [Harmonization of MODIS and VIIRS Hot Spots](https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/)
+<p align="center">
+  <b>A harmonized burning activity calendar from 25 years of NASA MODIS and VIIRS fire hotspots.</b><br>
+  2026 NASA Space Apps Challenge · Team <b>A11</b> · Monterrey, Mexico
+</p>
 
-> Build a web application that harmonizes 25 years of satellite active-fire hotspots (MODIS 2000→ and
-> VIIRS 2012→) into a consistent **burning activity calendar**, so responders, scientists and land managers
-> can see when and where burning happens, which periods are critical, and whether current activity is unusual.
+<p align="center">
+  <a href="https://emberatlas.ink"><b>🔥 Live app: emberatlas.ink</b></a> ·
+  <a href="https://emberatlas.ink/deck.html">Pitch deck (7 slides)</a> ·
+  <a href="https://www.spaceappschallenge.org/2026/challenges/modis-and-viirs-hot-spots/">The challenge</a>
+</p>
 
-**Live app: https://emberatlas.ink** · Pitch deck (7 slides): https://emberatlas.ink/deck.html
+<p align="center">
+  <img alt="NASA FIRMS" src="https://img.shields.io/badge/data-NASA%20FIRMS-0B3D91">
+  <img alt="MODIS + VIIRS" src="https://img.shields.io/badge/sensors-MODIS%20%2B%20VIIRS-E8590C">
+  <img alt="2001 to today" src="https://img.shields.io/badge/record-2001%20%E2%86%92%20today-555">
+  <img alt="Validated" src="https://img.shields.io/badge/monthly%20error%20(MX)-3.6%25-2b8a3e">
+  <img alt="Forecast AUC" src="https://img.shields.io/badge/72h%20forecast%20AUC-0.914-1971c2">
+</p>
 
-## What Ember Atlas does
+---
 
-- **Burning activity calendar** (month × year, 2001 → this week) for any area: a listed municipality or protected
-  area in Mexico or the United States, a polygon drawn on the map, or a circle around a latitude/longitude.
-- **Harmonized series:** MODIS (Terra/Aqua) and Suomi NPP are calibrated to the VIIRS NOAA-20 scale by 1° region and
-  calendar month, with a local correction per polygon and a 10–90% uncertainty band. Validated by leaving each year
-  out: **3.6% monthly error for Mexico** (first single-ratio method: 5.4%); r = 0.83 monthly against 77,420 fires
-  reported by CONAFOR (2015–2025). Method and limits: [doc 13](docs/research/13-harmonization-v2.md).
-- **Is this month unusual?** The selected month against the same month in the previous 25 years (median, normal
-  range, percentile, category from "much below" to "record high"), the fire season and what usually comes next.
-- **Detected vs reported fires:** hotspots against CONAFOR (Mexico) and NIFC WFIGS (United States).
-- **72 h forecast** from FireCast (LightGBM on VIIRS NOAA-20, AUC 0.914 on all of 2025). See
-  [FORECAST.md](web-hackathon/FORECAST.md).
-- **Downloads** for any date range: hotspots CSV, monthly calendar CSV, calendar and charts as PNG, one-page report.
-- **Ember**, an assistant that answers about the area on screen and can operate the page; it only cites numbers from
-  the page, its tools or our documentation ([web-hackathon/README.md](web-hackathon/README.md)).
-- **Daily data:** n8n pipelines load the FIRMS archive and the near-real-time feed into PostgreSQL + PostGIS
-  ([n8n/README.md](n8n/README.md)); gas flares and volcanoes are removed from the recent months.
+## The problem in one picture
 
-## Status
+NASA has watched fires from space since 2000 with **MODIS** (Terra, Aqua) and since 2012 with **VIIRS** (Suomi NPP,
+NOAA-20, NOAA-21). VIIRS pixels are finer (375 m vs 1 km), so for the **same fires** it counts about **4.3× more
+hotspots**. Put the two records end to end and fire activity seems to explode in 2012, the year VIIRS started. Fire
+managers are left without a consistent answer to *"is this month worse than normal?"*
 
-Phase 1 — Research & study ✅
-Phase 2 — Harmonization pipeline ✅ (v2, validated)
-Phase 3 — Web platform ✅ (live at emberatlas.ink, refreshed daily)
-Phase 4 — Demo & submission ✅
+**Ember Atlas** harmonizes both records into one VIIRS-equivalent series, so the sensor of origin no longer matters
+and the patterns, trends and anomalies do.
 
-## Key findings
+## What you can do with it
 
-- The only official resource is **NASA FIRMS**. Historical Standard Processing data can be downloaded per
-  country and year **without login**; recent data come from the FIRMS Area API (free MAP_KEY).
-- On Mexico 2019–2024, **VIIRS NOAA-20 detects ~4.2× more hotspots than MODIS (Terra+Aqua)**, but the monthly
-  series correlate at **r ≈ 0.995** → the fire *timing* is consistent; harmonization is mainly a *scale*
-  problem. The ratio varies by month (3.2×–5.9×), so a single global factor is not enough.
-- **Suomi NPP stopped delivering data on Nov 2, 2026.** VIIRS continuity is NOAA-20 / NOAA-21.
-- Method used: **calibration chain through real sensor overlaps, by region and calendar month**
-  (MODIS → S-NPP → NOAA-20) plus **anomaly/percentile views** for the calendar.
+| | Feature | Answers |
+|---|---|---|
+| 🗓️ | **Burning calendar** (month × year, 2001 → this week) | Which months burn, which years were worst |
+| 📍 | **Any area:** listed municipalities and protected areas (Mexico, United States), a **polygon you draw**, or a circle around a **lat/lon** | "What about *my* area?" |
+| 📊 | **This month vs its history:** median, normal range, percentile, category from *much below* to *record high* (colorblind-safe ColorBrewer RdBu) | Is today unusual? |
+| 🌡️ | **Fire season** and *what usually comes next* | When to prepare |
+| 🚒 | **Detected vs reported fires:** hotspots against CONAFOR (MX) and NIFC (US) records | How much burning goes unreported |
+| 🔮 | **72 h forecast** from our FireCast model | Where fire is likely in the next 3 days |
+| ⬇️ | **Downloads** for any date range: hotspots CSV, monthly CSV, PNG calendar and charts, one-page report | Take the data with you |
+| 💬 | **Ember**, an assistant that explains the numbers and can operate the page for you | Plain-language answers |
+| ⚖️ | **Burn rules** tab (NOM-015 for Mexican areas) | When burning is allowed |
 
-## Research documents
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph NASA["NASA FIRMS"]
+    SP["Standard Processing archive<br/>MODIS C6.1 · VIIRS 375 m<br/>2000 → 2025"]
+    NRT["Area API · near real time<br/>VIIRS NOAA-20/21, MODIS"]
+  end
+  subgraph OTHER["Reported fires"]
+    CON["CONAFOR (Mexico)"]
+    NIFC["NIFC WFIGS (US)"]
+  end
+
+  subgraph PIPE["n8n pipelines"]
+    BF["Historical backfill<br/>Mexico · United States"]
+    DAILY["Daily NRT · 06:00"]
+    ERR["Error handler → run log"]
+  end
+
+  subgraph DB["PostgreSQL 17 + PostGIS"]
+    HS[("hotspots<br/>monthly_grid")]
+    HF[("harmonization_factors<br/>static_sites")]
+    FN["SQL: harmonize_polygon()<br/>harmonized_*_json()"]
+    CHAT[("chat_messages<br/>rag_chunks")]
+  end
+
+  subgraph ML["Python · analysis/"]
+    CAL["pull → calibrate → build_sql<br/>leave-one-year-out validation"]
+  end
+
+  subgraph FC["FireCast service"]
+    LGBM["LightGBM · 0.25° cells<br/>refresh every 3 h"]
+  end
+
+  subgraph APP["emberatlas.ink · Node.js on Easypanel"]
+    SRV["server.js<br/>/api/harmonized · /api/hotspots<br/>/api/forecast · /api/chat"]
+    AG["Ember agent<br/>LangChain + MiniMax<br/>RAG with OpenAI embeddings"]
+    WEB["Calendar page<br/>Leaflet · SVG/canvas charts"]
+  end
+
+  SP --> BF --> HS
+  NRT --> DAILY --> HS
+  BF -.-> ERR
+  DAILY -.-> ERR
+  HS --> CAL --> HF
+  HF --> FN
+  HS --> FN
+  NRT --> LGBM
+  CON --> WEB
+  NIFC --> WEB
+  FN --> SRV
+  LGBM --> SRV
+  SRV <--> AG
+  AG <--> CHAT
+  SRV <--> WEB
+```
+
+**How a request flows:** the page asks `server.js` for an area → Postgres counts the hotspots inside the polygon per
+month and applies the harmonization factors in SQL (~0.1 s per municipality) → the page draws the calendar, compares
+the month with its history and asks the FireCast proxy for the next 72 h. Drawn polygons up to 100,000 km² are
+computed on the fly. Every push to `main` redeploys the site through a GitHub Action.
+
+## Harmonization: a calibration chain through real overlaps
+
+A single global factor is not enough: the VIIRS/MODIS ratio swings with the season (3.3× in Jan/Sep/Dec, 5.1× in
+June) and with the region. So each older sensor is linked to the reference through a period when **both really flew**:
+
+```mermaid
+flowchart RL
+  N20["VIIRS NOAA-20<br/><b>reference</b><br/>2018-04 → now"]
+  SNPP["VIIRS S-NPP<br/>2012-02 → 2018-03"]
+  MOD["MODIS Terra + Aqua<br/>2002-07 → 2012-01"]
+  TER["MODIS Terra only<br/>2001-01 → 2002-06"]
+  SNPP -- "k_S · overlap 2018–2025" --> N20
+  MOD -- "k_M · overlap 2012–2023" --> SNPP
+  TER -- "k_T · same overlap" --> SNPP
+```
+
+- **Factors per 1° region × calendar month**, with hierarchical shrinkage: regions with few fires borrow from the
+  national value (strength chosen by cross-validation).
+- **Local correction per polygon** `c = (ΣV + β) / (Σpred + β)`: busy areas use their own ratio, quiet ones keep the
+  regional one (this fixed Sierra de Arteaga, a forest range inside farmland).
+- **Uncertainty band** (10–90 %) from leave-one-year-out residuals: 84 % coverage on 1° cells, 80 % on areas.
+- **Same filters for every sensor:** vegetation fires only, nominal/high confidence. Gas flares and volcanoes are
+  removed from the near-real-time feed: **95.6 %** of static detections gone, **1.5 %** of vegetation fires lost
+  (tested out of sample).
+- MODIS is calibrated only up to 2023, because Terra's orbit drift shows from 2024.
+
+**Validation (each year hidden, predicted, compared):**
+
+| Monthly error (WAPE) | First method (one ratio) | **v2 (this)** |
+|---|---|---|
+| Mexico, national | 5.4 % | **3.6 %** |
+| All 1° cells | 23.0 % | **20.7 %** |
+| Sierra de Arteaga | 36.6 % | **25.8 %** |
+| Terra-only months (2001–2002) | −54 % bias | **5.5 %** |
+
+Against **77,420 fires reported by CONAFOR** (2015–2025) the harmonized monthly series correlates at **r = 0.83**.
+Full method and limits: [docs/research/13-harmonization-v2.md](docs/research/13-harmonization-v2.md).
+
+## FireCast: the 72-hour forecast
+
+| | |
+|---|---|
+| **Target** | At least one VIIRS hotspot in a 0.25° cell in the next 3 days |
+| **Model** | LightGBM, global, on VIIRS NOAA-20 history (static sources removed) |
+| **Features** | Hotspots in the last 1/3/7/30 days, fire days, FRP, days since last fire, neighbouring cells, the cell's climatology for that time of year, location, season |
+| **Test (all of 2025)** | **AUC 0.914** vs 0.849 climatology and 0.814 persistence; calibrated (says 72 % → happened 69 %) |
+| **Live** | Pulls the last 30 days of FIRMS NRT and refreshes every 3 h; the area's chance is `1 − Π(1 − p_cell)` |
+
+FireCast runs as its own service; the site reaches it through the `/api/forecast` proxy. Details:
+[web-hackathon/FORECAST.md](web-hackathon/FORECAST.md).
+
+## Ember: an assistant that uses the page
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant P as Page (agent.js)
+  participant S as server.js
+  participant A as Ember agent
+  participant D as Postgres
+  U->>P: "Is March unusual here?"
+  P->>S: POST /api/chat (message + what is on screen)
+  S->>A: run turn
+  A->>D: memory (chat_messages) · search_docs (rag_chunks)
+  A-->>P: page actions (select area, set month, open tab…)
+  P->>P: plays them with the Ember cursor
+  P->>S: tool results
+  A-->>U: answer with numbers from the page only
+```
+
+- **13 page tools** (search an area, set the month, layers, hotspot filter, area around a point, downloads…) plus
+  **document search** over [web-hackathon/knowledge/](web-hackathon/knowledge/).
+- **Grounded:** every number in a reply must come from the page, a tool result or a doc section; otherwise the reply
+  is rewritten without it. The model key never reaches the browser.
+- **Memory** in Postgres, compacted into a summary for long conversations. Replies in the user's language.
+
+More: [web-hackathon/README.md](web-hackathon/README.md).
+
+## Data pipelines
+
+Seven n8n workflows keep the database current (JSON in [n8n/workflows/](n8n/workflows/), generated by
+[n8n/build_workflows.py](n8n/build_workflows.py)):
+
+| Workflow | What it does |
+|---|---|
+| DB setup | Applies the schema ([analysis/db/schema.sql](analysis/db/schema.sql)) |
+| Load FIRMS CSV | Sub-workflow: stages a CSV, Postgres parses it with `load_staged()` |
+| Historical backfill (Mexico, United States) | FIRMS country files 2000–2025 + 2026 from the Area API |
+| **Daily NRT** | Every day at 06:00: new detections, drops NRT rows covered by the archive, rebuilds `monthly_grid` |
+| DB status | Row counts, freshness and errors |
+| Error handler | Marks failed runs in `pipeline_runs` |
+
+Details and caveats: [n8n/README.md](n8n/README.md).
+
+## Tech stack
+
+| Layer | Tools |
+|---|---|
+| Data | NASA FIRMS (archive + Area API), CONAFOR, NIFC WFIGS |
+| Pipelines | n8n |
+| Storage and spatial queries | PostgreSQL 17, PostGIS 3.5 |
+| Harmonization and analysis | Python 3.12 (standard library + numpy), SQL |
+| Forecast | LightGBM (FireCast service) |
+| Web | Node.js 22 (`server.js`), HTML/CSS/JavaScript, Leaflet, hand-made SVG/canvas charts |
+| Assistant | LangChain.js, MiniMax (OpenAI-compatible API), OpenAI `text-embedding-3-small` |
+| Hosting | Docker on Easypanel, GitHub Actions deploy, Let's Encrypt |
+
+## Repository map
+
+```
+.
+├── web-hackathon/        ★ The deployed app (emberatlas.ink)
+│   ├── server.js           API: harmonized series, hotspots, forecast proxy, chat
+│   ├── chat-agent.js       Ember agent (LangChain) · rag.js document search
+│   ├── public/             Calendar page, Ember UI, pitch deck (deck.html), brand
+│   ├── knowledge/          Documents Ember searches
+│   └── DATA_CONTRACT.md    Format of the harmonized series · FORECAST.md
+├── analysis/
+│   ├── harmonization/      pull.py → calibrate.py → build_sql.py → test_sql.py
+│   ├── db/                 schema.sql, harmonization_v2.sql, chat_memory.sql, rag.sql
+│   └── *.py                Sensor comparison, pixel matching, reported fires, explorer data
+├── n8n/                  Pipelines (workflow JSON + generator)
+├── docs/research/        Study of the challenge, users, interface and method (01–13)
+├── web/                  Fire Data Explorer: 3D globe used to understand the raw data
+└── data/                 Raw downloads (git-ignored, see data/README.md)
+```
+
+## Research behind it
 
 | # | Document |
 |---|---|
@@ -65,54 +258,61 @@ Phase 4 — Demo & submission ✅
 | 13 | [Harmonization v2: regional calibration, validated](docs/research/13-harmonization-v2.md) |
 | — | [References](docs/research/references.md) |
 
-## Interactive Fire Data Explorer
+Key findings: on Mexico 2019–2024, VIIRS NOAA-20 detects ~4.2× more hotspots than MODIS, but the monthly series
+correlate at **r ≈ 0.995**: the fire *timing* agrees, so harmonization is mainly a *scale* problem. Suomi NPP stopped
+delivering data on Nov 2, 2026; VIIRS continuity is NOAA-20 / NOAA-21.
 
-A 3D globe that shows every satellite's hotspots on a grid, simulates each orbit's coverage over 24 hours,
-and explains every field of a reading (research tool used before harmonizing). See [web/README.md](web/README.md).
+## Run it
+
+**Analysis** (Python 3.10+; downloads are cached in `data/raw/`):
+
+```bash
+python analysis/sensor_overlap.py --country Mexico --years 2019 2020 2021 2022 2023 2024
+```
+
+**Harmonization** (needs `DATABASE_URL` in `.env`; read-only access is enough):
+
+```bash
+python analysis/harmonization/pull.py
+python analysis/harmonization/calibrate.py
+python analysis/harmonization/build_sql.py
+python analysis/harmonization/test_sql.py
+```
+
+**Web app** (Node 22). Without a database it serves sample series from `public/data/harmonized/`:
+
+```bash
+cd web-hackathon && npm install && npm start
+```
+
+**Fire Data Explorer** (3D globe):
 
 ```bash
 python web/server.py
 ```
 
-## Repository structure
+**FIRMS key:** `cp .env.example .env`, then set `FIRMS_MAP_KEY` (free at
+https://firms.modaps.eosdis.nasa.gov/api/map_key/). `.env` is git-ignored: never commit the key or put it in
+front-end code.
 
-```
-.
-├── docs/research/     Phase 1 study, harmonization method and validation
-├── analysis/          Python: sensor comparison, harmonization (pull → calibrate → build_sql → test_sql)
-│   └── db/            SQL: schema, harmonization v2, chat memory, document search
-├── n8n/               Data pipelines (FIRMS archive + daily NRT → PostgreSQL/PostGIS)
-├── web-hackathon/     The deployed app (emberatlas.ink): Node server, calendar page, Ember, deck, knowledge docs
-├── web/               Fire Data Explorer (research globe) and early mockup
-└── data/              Data folder (raw downloads are git-ignored; see data/README.md)
-```
+## Limits we know about
+
+- Calibrated on Mexico; US areas use Mexico's national fallback and skip the S-NPP link (no S-NPP downloaded for the US).
+- Small areas in the Terra-only months (2001–2002) are uncertain (±50 % or more); the page shows the range.
+- Months are UTC months, without a day/night split.
+- The forecast is a probability, not a guarantee; the area chance assumes independent cells.
 
 ## Team A11 (Monterrey)
 
-Leonardo Sáenz · José Ángel Ipiña · Abiel Jefté Ramírez
-
-## Quick start (analysis)
-
-```bash
-python analysis/sensor_overlap.py --country Mexico --years 2019 2020 2021 2022 2023 2024
-```
-Requires Python 3.10+. `sensor_overlap.py` uses the standard library only; `build_explorer_data.py` also
-needs `numpy`. Downloads are cached in `data/raw/`.
-
-## Configuration (FIRMS API key)
-
-```bash
-cp .env.example .env   # then set FIRMS_MAP_KEY=<your key>
-```
-Get a free key at https://firms.modaps.eosdis.nasa.gov/api/map_key/. `.env` is git-ignored: never commit the key
-or expose it in front-end code. Needed only for recent NRT data and for VIIRS NOAA-21.
+**Leonardo Sáenz** · **José Ángel Ipiña** · **Abiel Jefté Ramírez**
 
 ## Data acknowledgment
 
 We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System
 (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth
 observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System
-(ESDIS).
+(ESDIS). Reported fires: CONAFOR wildfire records (datos.gob.mx, CC BY 4.0) and NIFC Wildland Fire Incident
+Locations (WFIGS). Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors.
 
 ## AI (SI) assistance disclosure
 

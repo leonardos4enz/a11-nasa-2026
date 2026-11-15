@@ -112,6 +112,9 @@ class Handler(SimpleHTTPRequestHandler):
             actions.append(("set_theme", {"theme": "light"}))
         if "forecast" in low or "pronóstico" in low:
             actions.append(("set_layer", {"layer": "forecast", "visible": True}))
+        if "descarga" in low or "download" in low:
+            f = "calendar_png" if ("png" in low or "imagen" in low) else "monthly_csv"
+            actions.append(("download_report", {"file": f, "range": "this_year"}))
         if "loop" in low:
             return {"reply": "", "actions": [{"id": "loop_0", "name": "get_month_data", "args": {"year": 2024}}]}
         if "demo" in low:

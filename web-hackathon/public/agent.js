@@ -152,6 +152,19 @@
   const brief = (a) => ({ name: a.name, kind: a.kind, country: countryOf(a) });
 
   // ---------- actions ----------
+  const DOWNLOADS = {
+    hotspots_csv: { id: "hotcsv", label: "the hotspots CSV", wait: 40 },
+    monthly_csv: { id: "csv", label: "the monthly calendar CSV" },
+    calendar_png: { id: "calpng", label: "the calendar picture (PNG)" },
+    charts_png: { id: "chartpng", label: "the charts picture (PNG)" },
+    summary_pdf: { id: "report", label: "the one-page summary (PDF)", wait: 4 },
+  };
+  const RANGES = {
+    this_year: { preset: "year", label: "this year" },
+    last_12_months: { preset: "12", label: "last 12 months" },
+    last_fire_season: { preset: "season", label: "last fire season" },
+    full_record: { preset: "all", label: "full record" },
+  };
   const FT = { vegetation: "0", volcano: "1", industrial: "2", offshore: "3" };
   const FRP = { low: "lo", moderate: "mid", high: "hi" };
   const ACTIONS = {
@@ -279,6 +292,29 @@
       if ($("cErr").textContent) return { ok: false, error: $("cErr").textContent };
       return { ok: area !== before, view: view() };
     },
+    async download_report({ file, range }) {
+      ready();
+      const f = DOWNLOADS[file];
+      if (!f) return { ok: false, error: `Unknown file ${file}.` };
+      const r = range ? RANGES[range] : null;
+      if (range && !r) return { ok: false, error: `Unknown range ${range}.` };
+      // Nothing is downloaded without the user's yes, asked in the chat (assistant.js provides confirm()).
+      const ask = `Download **${f.label}** for **${area.name}**${r ? ` (${r.label})` : ""}?`;
+      const yes = typeof window.EmberAgent.confirm === "function" ? await window.EmberAgent.confirm(ask, "Download") : false;
+      if (!yes) return { ok: false, declined: true, error: "The user declined the download." };
+      check();
+      // Move fast: browsers only let a page open a new window (the PDF summary) shortly after the user's click.
+      say(`Downloading ${f.label}`);
+      const tab = document.querySelector('.tabs button[data-t="data"]');
+      if (tab.getAttribute("aria-selected") !== "true") await click(tab);
+      if (r) await click(document.querySelector(`#rgPresets [data-p="${r.preset}"]`));
+      $("dlMsg").textContent = "";
+      await click($(f.id));
+      for (let t = 0; t < (f.wait || 6) && !$("dlMsg").textContent; t++) await sleep(500);
+      const msg = $("dlMsg").textContent;
+      if (/allow pop-ups|could not|failed|error/i.test(msg)) return { ok: false, error: msg };
+      return { ok: true, file: f.label, range: `${$("rgFrom").value} to ${$("rgTo").value}`, message: msg || "Started." };
+    },
     async set_theme({ theme }) {
       const isDark = document.documentElement.dataset.theme === "dark";
       say(`Switching to ${theme} mode`);
@@ -306,6 +342,7 @@
     set_hotspot_filter: () => "Filtering hotspots",
     area_around_point: (a) => `Area around ${a.lat}, ${a.lon}`,
     set_theme: (a) => `${a.theme === "dark" ? "Dark" : "Light"} mode`,
+    download_report: (a) => `Download: ${(DOWNLOADS[a.file] || { label: a.file }).label}${a.range && RANGES[a.range] ? ` · ${RANGES[a.range].label}` : ""}`,
     play_timeline: (a) => (a.playing ? "Playing the timeline" : "Pausing the timeline"),
   };
   const label = (a) => (LABELS[a.name] ? LABELS[a.name](a.args || {}) : a.name);

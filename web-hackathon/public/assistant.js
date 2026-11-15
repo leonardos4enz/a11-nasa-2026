@@ -79,7 +79,7 @@
     const running = acts.find((a) => a.state === "run");
     const failed = acts.filter((a) => a.state === "fail").length;
     const open = openStacks.has(key);
-    el.className = `ember-msg acts${acts.length > 1 ? " multi" : ""}${acts.length > 2 ? " many" : ""}${open ? " open" : ""}${running ? " run" : failed ? " fail" : ""}`;
+    el.className = `ember-msg acts${acts.length > 1 ? " multi" : ""}${acts.length > 2 ? " many" : ""}${open ? " open" : ""}${running ? " run" : failed ? " fail" : acts.every((x) => x.state === "skip") ? " skip" : ""}`;
     const title = running
       ? `${esc(running.text)}…`
       : acts.length === 1 ? esc(acts[0].text) : `Used the page · ${acts.length} steps`;
@@ -90,12 +90,47 @@
       `<ol class="acts-list"${open ? "" : " hidden"}>${acts
         .map((a) => `<li class="${a.state || "ok"}"${a.error ? ` title="${esc(a.error)}"` : ""}><i></i><span>${esc(a.text)}</span></li>`)
         .join("")}</ol>`;
-    el.querySelector(".acts-head").onclick = () => {
-      openStacks.has(key) ? openStacks.delete(key) : openStacks.add(key);
-      render();
+    // Toggle in place: a full render() would rebuild the log and jump to the bottom.
+    el.querySelector(".acts-head").onclick = (e) => {
+      const nowOpen = !openStacks.has(key);
+      nowOpen ? openStacks.add(key) : openStacks.delete(key);
+      el.classList.toggle("open", nowOpen);
+      el.querySelector(".acts-list").hidden = !nowOpen;
+      e.currentTarget.setAttribute("aria-expanded", String(nowOpen));
+      if (nowOpen) el.scrollIntoView({ block: "nearest" });
     };
     return el;
   }
+
+  // ---- Confirmation cards (agent.js calls EmberAgent.confirm before a download) ----
+  let pendingConfirm = null; // { item, resolve }
+  function answerConfirm(yes) {
+    if (!pendingConfirm) return;
+    const { item, resolve } = pendingConfirm;
+    pendingConfirm = null;
+    item.state = yes ? "yes" : "no";
+    save(); render();
+    if (narrow() && yes) setOpen(false, false); // get the drawer off the map again while Ember works
+    resolve(yes);
+  }
+  function confirmInChat(text, yesLabel) {
+    return new Promise((resolve) => {
+      const item = { role: "confirm", text: String(text), yes: yesLabel || "Yes" };
+      history.push(item);
+      pendingConfirm = { item, resolve };
+      if (panel.hidden) setOpen(true, false); // the question must be visible, also on narrow screens
+      mood("curious");
+      stateEl.textContent = "Waiting for your answer";
+      render();
+      setTimeout(() => panel.querySelector(".ember-msg.confirm.pending .yes")?.focus(), 0);
+      // The Stop bar also answers "no".
+      const poll = setInterval(() => {
+        if (pendingConfirm?.item !== item) return clearInterval(poll);
+        if (window.EmberAgent?.stopped) { clearInterval(poll); answerConfirm(false); }
+      }, 300);
+    });
+  }
+  if (window.EmberAgent) window.EmberAgent.confirm = confirmInChat;
 
   function render() {
     welcome.hidden = history.length > 0;
@@ -117,13 +152,26 @@
       const el = document.createElement("div");
       el.className = "ember-msg " + m.role;
       if (m.role === "bot") el.innerHTML = md(m.text);
-      else if (m.role === "err") {
+      else if (m.role === "confirm") {
+        // Ember asks before doing something with consequences (a download). Only the live question has buttons.
+        const live = pendingConfirm && pendingConfirm.item === m;
+        el.classList.add(live ? "pending" : m.state === "yes" ? "yes" : "no");
+        el.innerHTML =
+          `<div class="cq">${md(m.text)}</div>` +
+          (live
+            ? `<div class="cb"><button type="button" class="yes">${esc(m.yes || "Yes")}</button><button type="button" class="no">Cancel</button></div>`
+            : `<div class="cr">${m.state === "yes" ? "✓ Accepted" : "Cancelled"}</div>`);
+        if (live) {
+          el.querySelector(".yes").onclick = () => answerConfirm(true);
+          el.querySelector(".no").onclick = () => answerConfirm(false);
+        }
+      } else if (m.role === "err") {
         el.innerHTML = `<span>${esc(m.text)}</span><button type="button">Try again</button>`;
         el.querySelector("button").onclick = () => { const q = m.retry; history.splice(i, 1); ask(q, true); };
       } else el.textContent = m.text;
       log.appendChild(el);
     });
-    if (busy) {
+    if (busy && !pendingConfirm) {
       const t = document.createElement("div");
       t.className = "ember-msg bot";
       t.innerHTML = '<span class="ember-typing" aria-label="Ember is typing"><i></i><i></i><i></i></span>';
@@ -139,7 +187,7 @@
     busy = true; send.disabled = true; input.value = ""; autosize();
     save(); render();
     mood("thinking");
-    const slow = setTimeout(() => mood("working"), 2500);
+    const slow = setTimeout(() => { if (!pendingConfirm) mood("working"); }, 2500);
     const agentUI = window.EmberAgent;
     let hidPanel = false, halted = 0, ended = false;
     const MAX_STEPS = 8; // requests per question; the last one asks the agent to answer without more actions
@@ -183,7 +231,7 @@
           const item = { role: "act", text: agentUI.label(a), state: "run" };
           history.push(item); render();
           let result = await agentUI.run(a);
-          item.state = result && result.ok === false ? "fail" : "ok";
+          item.state = result && result.declined ? "skip" : result && result.ok === false ? "fail" : "ok";
           if (result && result.error) item.error = result.error;
           const json = JSON.stringify(result ?? null);
           if (json.length > 3500) result = { ok: result.ok, truncated: json.slice(0, 3500) };

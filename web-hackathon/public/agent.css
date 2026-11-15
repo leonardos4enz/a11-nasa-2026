@@ -60,9 +60,23 @@
 .ember-msg.acts i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #2f9e44; }
 .ember-msg.acts.run .acts-head i, .acts-list li.run i { background: var(--eag-ink); animation: eag-pulse 1s ease-in-out infinite; }
 .ember-msg.acts.fail .acts-head i, .acts-list li.fail i { background: var(--warn); }
+.ember-msg.acts.skip .acts-head i, .acts-list li.skip i { background: var(--text-3); }
+.acts-list li.skip span { color: var(--text-3); }
 
 @media (prefers-reduced-motion: reduce) {
   .eag-on .eag-frame, .eag-dot, .ember-msg.acts i { animation: none !important; }
   .acts-head .chev { transition: none; }
   .eag-cursor svg, .eag-bar, .eag-frame { transition: none; }
 }
+
+/* Confirmation card: Ember asks before a download (assistant.js confirmInChat) */
+.ember-msg.confirm { align-self: stretch; white-space: normal; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 20px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+.ember-msg.confirm.pending { border-color: var(--eag-ink); box-shadow: 0 0 0 3px var(--eag-soft); }
+.ember-msg.confirm .cb { display: flex; gap: 8px; margin-top: 10px; }
+.ember-msg.confirm .cb button { height: 30px; padding: 0 14px; border-radius: 8px; font: 600 12px Inter, system-ui, sans-serif; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.ember-msg.confirm .cb button.yes { background: var(--eag-ink); border-color: var(--eag-ink); color: #fff; }
+.ember-msg.confirm .cb button:focus-visible { outline: 2px solid var(--focus, var(--eag-ink)); outline-offset: 2px; }
+.ember-msg.confirm .cr { margin-top: 6px; font-size: 12px; color: var(--text-3); }
+.ember-msg.confirm.yes .cr { color: #2f9e44; }

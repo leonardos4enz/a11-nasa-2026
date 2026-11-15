@@ -142,6 +142,23 @@ const PAGE_TOOLS = [
     },
   },
   {
+    name: "download_report",
+    description:
+      "Download a file from the Report tab for the current area: hotspots_csv (every detection in the range), monthly_csv (the monthly calendar for the range), calendar_png, charts_png, or summary_pdf (one-page summary to print or save as PDF). The user is asked in the chat to accept before anything is downloaded. Call it only when the user asks for a download or export.",
+    parameters: {
+      type: "object",
+      properties: {
+        file: { type: "string", enum: ["hotspots_csv", "monthly_csv", "calendar_png", "charts_png", "summary_pdf"] },
+        range: {
+          type: "string",
+          enum: ["this_year", "last_12_months", "last_fire_season", "full_record"],
+          description: "Date range preset for the CSVs and the summary. Omit to keep the range already set.",
+        },
+      },
+      required: ["file"],
+    },
+  },
+  {
     name: "set_theme",
     description: "Switch the page between light and dark mode.",
     parameters: { type: "object", properties: { theme: { type: "string", enum: ["light", "dark"] } }, required: ["theme"] },
@@ -189,6 +206,7 @@ You can USE THE PAGE for the user with tools (the user watches your cursor do it
 - "busca / show / go to <place>" → select_area (use list_areas first only if the name is unclear).
 - "pon / set <month year>" → set_month. "the previous/next month with fires" → jump_fire_month.
 - tabs, map layers, hotspot filters, a point with a radius, dark/light mode, play the timeline → the matching tool.
+- "descarga / download / export <file>" → download_report. The user must accept it in the chat; if the result says they declined, just acknowledge it (do not retry). Never say a file was downloaded unless the result has "ok": true.
 - If you are not sure what is on screen, call get_view.
 - Questions about the project, the satellites, the method, definitions or how to use the site → search_docs (if available), then answer from the sections it returns; mention the document when useful. Do not invent facts that are not in the docs or the data.
 Use page actions ONLY when the user asks to change or show something on the page. For questions ("is this month unusual?", "when is the fire season?", "compare with 2024") answer from the [App context] line, and if you need other months use get_month_data, which reads the numbers WITHOUT moving the page. Never explore by moving the timeline month after month.

@@ -5,7 +5,7 @@
 -- Method (docs/research/14-harmonization-simple.md):
 --   1. Divide   VIIRS / Aqua for each month of Mexico, same filters for both (SP, vegetation, nominal/high).
 --               VIIRS = S-NPP until 2018-03, NOAA-20 from 2018-04 (one reference satellite per sensor, never summed).
---   2. Median   of those ratios over 2012-02..2021-12 (before the MODIS orbit drift); IQR = uncertainty.
+--   2. Median   of those ratios over 2012-02..2021-12 (before the MODIS orbit drift); 10-90 % range of the ratios = uncertainty.
 --   3. Per month: twelve factors k, one per calendar month.
 --   4. Translate: 2002-07..2012-01 = Aqua x k. Before 2002-07 only Terra flies:
 --               Terra x (Aqua/Terra factor, median of 2003..2011) x k. From 2012-02: VIIRS as observed.
@@ -60,14 +60,15 @@ CREATE TABLE IF NOT EXISTS harmonization_calib (
     viirs bigint NOT NULL       -- S-NPP until 2018-03, NOAA-20 from 2018-04
 );
 
--- The factors: twelve per link (one per calendar month).
+-- The factors: twelve per link (one per calendar month). Dropped first: its columns changed (IQR -> 10-90 %).
+DROP TABLE IF EXISTS harmonization_k;
 CREATE TABLE IF NOT EXISTS harmonization_k (
     link    text     NOT NULL,  -- 'AQUA'  = VIIRS / Aqua  (2012-02..2021-12)
                                 -- 'TERRA' = Aqua / Terra  (2003-01..2011-12), only for the Terra-only months
     m       smallint NOT NULL,  -- calendar month 1-12
     k       float8   NOT NULL,  -- median of the yearly ratios
-    k_q25   float8   NOT NULL,  -- interquartile range of the yearly ratios = uncertainty band
-    k_q75   float8   NOT NULL,
+    k_p10   float8   NOT NULL,  -- 10th-90th percentile of the yearly ratios = uncertainty band
+    k_p90   float8   NOT NULL,
     n_years int      NOT NULL,
     PRIMARY KEY (link, m)
 );
@@ -85,11 +86,11 @@ CREATE OR REPLACE FUNCTION refresh_harmonization_k() RETURNS bigint LANGUAGE sql
       AND acq_date >= date '2003-01-01' AND acq_date < date '2022-01-01'
     GROUP BY 1;
 
-    INSERT INTO harmonization_k (link, m, k, k_q25, k_q75, n_years)
+    INSERT INTO harmonization_k (link, m, k, k_p10, k_p90, n_years)
     SELECT 'AQUA', extract(month FROM month)::int,
            percentile_cont(0.50) WITHIN GROUP (ORDER BY viirs::float8 / aqua),
-           percentile_cont(0.25) WITHIN GROUP (ORDER BY viirs::float8 / aqua),
-           percentile_cont(0.75) WITHIN GROUP (ORDER BY viirs::float8 / aqua),
+           percentile_cont(0.10) WITHIN GROUP (ORDER BY viirs::float8 / aqua),
+           percentile_cont(0.90) WITHIN GROUP (ORDER BY viirs::float8 / aqua),
            count(*)
     FROM harmonization_calib
     WHERE month >= date '2012-02-01'          -- S-NPP starts 2012-01-19: January 2012 is a partial month
@@ -98,8 +99,8 @@ CREATE OR REPLACE FUNCTION refresh_harmonization_k() RETURNS bigint LANGUAGE sql
     UNION ALL
     SELECT 'TERRA', extract(month FROM month)::int,
            percentile_cont(0.50) WITHIN GROUP (ORDER BY aqua::float8 / terra),
-           percentile_cont(0.25) WITHIN GROUP (ORDER BY aqua::float8 / terra),
-           percentile_cont(0.75) WITHIN GROUP (ORDER BY aqua::float8 / terra),
+           percentile_cont(0.10) WITHIN GROUP (ORDER BY aqua::float8 / terra),
+           percentile_cont(0.90) WITHIN GROUP (ORDER BY aqua::float8 / terra),
            count(*)
     FROM harmonization_calib
     WHERE month < date '2012-01-01' AND terra > 0 AND aqua > 0
@@ -136,8 +137,8 @@ RETURNS TABLE (month date, count integer, low integer, high integer, source text
                     ELSE 'TERRA' END AS era,
                coalesce(pm.terra, 0) AS terra, coalesce(pm.aqua, 0) AS aqua,
                coalesce(pm.snpp, 0) AS snpp, coalesce(pm.n20, 0) AS n20,
-               ka.k AS ka, ka.k_q25 AS ka25, ka.k_q75 AS ka75,
-               kt.k AS kt, kt.k_q25 AS kt25, kt.k_q75 AS kt75
+               ka.k AS ka, ka.k_p10 AS ka_lo, ka.k_p90 AS ka_hi,
+               kt.k AS kt, kt.k_p10 AS kt_lo, kt.k_p90 AS kt_hi
         FROM months mo CROSS JOIN flag f
         LEFT JOIN pm ON pm.month = mo.month
         LEFT JOIN harmonization_k ka ON ka.link = 'AQUA'  AND ka.m = mo.m
@@ -148,9 +149,9 @@ RETURNS TABLE (month date, count integer, low integer, high integer, source text
                CASE era WHEN 'NOAA20' THEN n20::float8 WHEN 'SNPP' THEN snpp::float8
                         WHEN 'AQUA' THEN aqua * ka ELSE terra * kt * ka END AS h,
                CASE era WHEN 'NOAA20' THEN n20::float8 WHEN 'SNPP' THEN snpp::float8
-                        WHEN 'AQUA' THEN aqua * ka25 ELSE terra * kt25 * ka25 END AS lo,
+                        WHEN 'AQUA' THEN aqua * ka_lo ELSE terra * kt_lo * ka_lo END AS lo,
                CASE era WHEN 'NOAA20' THEN n20::float8 WHEN 'SNPP' THEN snpp::float8
-                        WHEN 'AQUA' THEN aqua * ka75 ELSE terra * kt75 * ka75 END AS hi
+                        WHEN 'AQUA' THEN aqua * ka_hi ELSE terra * kt_hi * ka_hi END AS hi
         FROM est
     )
     SELECT month,
@@ -171,12 +172,12 @@ CREATE OR REPLACE FUNCTION harmonization_validation_json() RETURNS jsonb LANGUAG
         FROM harmonization_calib WHERE month >= date '2012-02-01' AND aqua > 0 AND viirs > 0
     ),
     pred AS (
-        SELECT t.y, t.m, t.viirs::float8 AS truth, t.aqua * o.k AS pred, t.aqua * o.q25 AS lo, t.aqua * o.q75 AS hi
+        SELECT t.y, t.m, t.viirs::float8 AS truth, t.aqua * o.k AS pred, t.aqua * o.p10 AS lo, t.aqua * o.p90 AS hi
         FROM c t
         CROSS JOIN LATERAL (
             SELECT percentile_cont(0.50) WITHIN GROUP (ORDER BY x.viirs::float8 / x.aqua) AS k,
-                   percentile_cont(0.25) WITHIN GROUP (ORDER BY x.viirs::float8 / x.aqua) AS q25,
-                   percentile_cont(0.75) WITHIN GROUP (ORDER BY x.viirs::float8 / x.aqua) AS q75
+                   percentile_cont(0.10) WITHIN GROUP (ORDER BY x.viirs::float8 / x.aqua) AS p10,
+                   percentile_cont(0.90) WITHIN GROUP (ORDER BY x.viirs::float8 / x.aqua) AS p90
             FROM c x WHERE x.m = t.m AND x.y <> t.y) o
     ),
     yr AS (SELECT y, sum(pred) / sum(truth) - 1 AS err FROM pred GROUP BY y)
@@ -188,10 +189,10 @@ CREATE OR REPLACE FUNCTION harmonization_validation_json() RETURNS jsonb LANGUAG
         'annual_median_abs_error',
             round((SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY abs(err)) FROM yr)::numeric, 3),
         'annual_error_by_year', (SELECT jsonb_object_agg(y, round(err::numeric, 3) ORDER BY y) FROM yr),
-        'iqr_band_coverage',
+        'band_coverage',
             round((SELECT avg(CASE WHEN truth BETWEEN floor(lo) AND ceil(hi) THEN 1.0 ELSE 0.0 END) FROM pred)::numeric, 3),
         'factors', (SELECT jsonb_agg(jsonb_build_object('link', link, 'm', m, 'k', round(k::numeric, 2),
-                                                        'q25', round(k_q25::numeric, 2), 'q75', round(k_q75::numeric, 2),
+                                                        'p10', round(k_p10::numeric, 2), 'p90', round(k_p90::numeric, 2),
                                                         'years', n_years) ORDER BY link, m)
                     FROM harmonization_k));
 $$;
@@ -208,7 +209,7 @@ CREATE OR REPLACE FUNCTION harmonized_index_json() RETURNS jsonb LANGUAGE sql ST
         'baseline', jsonb_build_object('first_year', 2001, 'last_year', extract(year FROM t.d)::int - 1),
         'units', 'VIIRS-equivalent vegetation-fire hotspots per month, nominal/high confidence',
         'reference', 'VIIRS (S-NPP until 2018-03, NOAA-20 from 2018-04)',
-        'method', 'One factor k per calendar month = median of VIIRS / Aqua over 2012-2021 in Mexico (before the MODIS orbit drift). 2012-02 on: VIIRS as observed (S-NPP, then NOAA-20 from 2018-04). 2002-07..2012-01: Aqua x k. Before 2002-07 only Terra flies: Terra x (Aqua/Terra factor, 2003-2011) x k. Areas with no S-NPP data (United States): Aqua x k until 2018-03. Vegetation fires, nominal/high confidence; NRT static sources removed. Low/high = interquartile range of the yearly ratios.',
+        'method', 'One factor k per calendar month = median of VIIRS / Aqua over 2012-2021 in Mexico (before the MODIS orbit drift). 2012-02 on: VIIRS as observed (S-NPP, then NOAA-20 from 2018-04). 2002-07..2012-01: Aqua x k. Before 2002-07 only Terra flies: Terra x (Aqua/Terra factor, 2003-2011) x k. Areas with no S-NPP data (United States): Aqua x k until 2018-03. Vegetation fires, nominal/high confidence; NRT static sources removed. Low/high = 10th-90th percentile of the yearly ratios.',
         'areas', (SELECT coalesce(jsonb_agg(jsonb_build_object('id', id, 'name', name, 'kind', kind, 'file', 'areas/' || id)
                                             ORDER BY sort_order, name), '[]'::jsonb) FROM areas))
     FROM (SELECT max(acq_date) AS d FROM hotspots) t;

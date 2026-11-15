@@ -515,17 +515,28 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
         <div class="sect mchart">
           <h4>Hotspots per year, before and after harmonization</h4>
           <svg id="mAnnual" role="img" aria-label="Yearly hotspots: raw MODIS, raw VIIRS and the harmonized series"></svg>
-          <div class="lg2"><span><i style="background:var(--text)"></i>Harmonized</span><span><i style="background:#E8590C"></i>VIIRS NOAA-20 (raw)</span><span><i style="background:var(--text-3)"></i>MODIS Terra+Aqua (raw)</span></div>
+          <div class="lg2"><span><i style="background:var(--text)"></i>Harmonized</span><span><i style="background:#E8590C"></i>VIIRS raw (S-NPP, NOAA-20 from 2018-04)</span><span><i style="background:var(--text-3)"></i>MODIS Terra+Aqua (raw)</span></div>
         </div>
         <div class="sect mchart">
           <h4 id="mOverTitle">Overlap years: VIIRS vs adjusted MODIS</h4>
           <svg id="mOver" role="img" aria-label="Monthly VIIRS hotspots against MODIS adjusted to the VIIRS scale in the overlap years"></svg>
-          <div class="lg2"><span><i class="bar" style="background:var(--surface-3)"></i>VIIRS NOAA-20 (observed)</span><span><i style="background:#E8590C"></i>MODIS adjusted (predicted)</span></div>
+          <div class="lg2"><span><i class="bar" style="background:var(--surface-3)"></i><span id="mOverObs">VIIRS (observed)</span></span><span><i style="background:#E8590C"></i>MODIS adjusted (predicted)</span></div>
         </div>
         <div class="sect">
           <h4>Cross-validation by year</h4>
           <table class="mtab" id="mTab"></table>
-          <div class="foot">Each year is predicted with the ratio of the <i>other</i> overlap years (leave-one-year-out), so the check never sees the year it tests. This is a simplified check (one NOAA-20/MODIS ratio per area, straight MODIS → NOAA-20); the calendar itself uses the full method below, chained through S-NPP with regional monthly factors.</div>
+          <div class="foot">A quick local check of the link from MODIS to VIIRS S-NPP, the same link the full method calibrates (straight to NOAA-20 where there is no S-NPP). Each year is predicted with the ratio of the <i>other</i> overlap years (leave-one-year-out), so the check never sees the year it tests. Years after 2023 are left out because Terra's orbit drifts from 2024. It uses one ratio per area; the calendar uses the full method below, with regional monthly factors.</div>
+        </div>
+        <div class="sect">
+          <h4>Validation of the full method (Mexico)</h4>
+          <table class="mtab">
+            <tr><th>Monthly error, leave-one-year-out</th><th>One ratio</th><th>Full method</th></tr>
+            <tr><td>Mexico, national</td><td>5.4%</td><td><b>3.6%</b></td></tr>
+            <tr><td>All 1° cells</td><td>23.0%</td><td><b>20.7%</b></td></tr>
+            <tr><td>Sierra de Arteaga</td><td>36.6%</td><td><b>25.8%</b></td></tr>
+            <tr><td>Terra-only months (2001–mid 2002)</td><td>−54% bias</td><td><b>5.5%</b></td></tr>
+          </table>
+          <div class="foot">Error = WAPE of monthly totals, with each year hidden from the calibration and predicted. The 10–90% range holds the true value 84% of the time on 1° cells and 80% on areas. Details: <a href="https://github.com/leonardos4enz/a11-nasa-2026/blob/main/docs/research/13-harmonization-v2.md" target="_blank" rel="noopener">harmonization v2 report</a>.</div>
         </div>
         <div class="sect notes">
           <h4>How the record is harmonized</h4>
@@ -1405,15 +1416,23 @@ function validationFor(a){
   RAW.set(a.id,p);p.catch(()=>RAW.delete(a.id));return p}
 // Without the database: raw counts invented from the illustrative series, so the tab can be previewed.
 function fakeRaw(a){const r=rng(7+a.id.length),rows=[];for(let y=Y0;y<=CY;y++)for(let m=0;m<12;m++){const v=val(a,y,m);if(v==null)continue;
-  const k=4.2*Math.exp((r()-.5)*.5);rows.push({month:`${y}-${pad2(m+1)}`,modis:Math.round(v/k),noaa20:y>ERA_END?v:0})}return rows}
+  const k=4.2*Math.exp((r()-.5)*.5),t=y*12+m;rows.push({month:`${y}-${pad2(m+1)}`,modis:Math.round(v/k),snpp:y>ERA_END&&t<N20_START?v:0,noaa20:t>=N20_START?v:0})}return rows}
+// VIIRS as the calendar uses it: S-NPP until 2018-03, NOAA-20 (the reference) from 2018-04.
+const N20_START=2018*12+3;
 function validate(a,rows){
-  const M={},V={};rows.forEach(r=>{const y=+r.month.slice(0,4),m=+r.month.slice(5,7)-1;(M[y]??=Array(12).fill(0))[m]=r.modis;(V[y]??=Array(12).fill(0))[m]=r.noaa20});
+  const M={},S={},N={},V={},put=(o,y,m,v)=>{(o[y]??=Array(12).fill(0))[m]=v||0};
+  rows.forEach(r=>{const y=+r.month.slice(0,4),m=+r.month.slice(5,7)-1;put(M,y,m,r.modis);put(S,y,m,r.snpp);put(N,y,m,r.noaa20);put(V,y,m,y*12+m<N20_START?r.snpp:r.noaa20)});
   const sum=x=>x?x.reduce((s,v)=>s+v,0):0;
-  const years=[];for(let y=ERA_END+1;y<=Y1;y++)if(sum(M[y])>=5&&sum(V[y])>0)years.push(y);
-  const ratio=y=>sum(V[y])/sum(M[y]),annual=[];
-  for(let y=Y0;y<=CY;y++){let h=0;for(let m=0;m<12;m++)h+=val(a,y,m)??0;annual.push({y,modis:sum(M[y]),viirs:sum(V[y]),harm:h})}
-  const out={ok:years.length>=3,years,annual,M,V};
-  if(!out.ok){out.sentence=`Too few fires in the overlap years (${ERA_END+1}–${Y1}) to test the adjustment in this area; the database-wide ratio is used instead.`;return out}
+  // Areas without S-NPP in the database (United States) start the VIIRS record with NOAA-20 in 2018-04.
+  const hasS=Object.values(S).some(x=>sum(x)>0),vFrom=hasS?2012:2019;
+  // Local check of the MODIS link, as in the full method: MODIS -> S-NPP (MODIS -> NOAA-20 without S-NPP),
+  // complete overlap years only, and only up to 2023 because Terra's orbit drifts from 2024.
+  const R=hasS?S:N,ref=hasS?'VIIRS S-NPP':'VIIRS NOAA-20',yFrom=hasS?2013:2019,yTo=Math.min(2023,Y1);
+  const years=[];for(let y=yFrom;y<=yTo;y++)if(sum(M[y])>=5&&sum(R[y])>0)years.push(y);
+  const ratio=y=>sum(R[y])/sum(M[y]),annual=[];
+  for(let y=Y0;y<=CY;y++){let h=0;for(let m=0;m<12;m++)h+=val(a,y,m)??0;annual.push({y,modis:sum(M[y]),viirs:y>=vFrom?sum(V[y]):null,harm:h})}
+  const out={ok:years.length>=3,years,annual,M,V:R,ref,vFrom};
+  if(!out.ok){out.sentence=`Raw VIIRS counts several times more hotspots than MODIS, which is the jump in the orange line. There are too few fires here in the overlap years (${yFrom}–${yTo}) to test the adjustment locally; the regional factors of the full method apply.`;return out}
   const k=median(years.map(ratio)),pairs=[],tab=[];
   years.forEach(y=>{const kk=median(years.filter(z=>z!==y).map(ratio)),pred=sum(M[y])*kk,obs=sum(V[y]);
     tab.push({y,modis:sum(M[y]),obs,pred:Math.round(pred),k:ratio(y),err:obs?100*(pred-obs)/obs:0});
@@ -1422,11 +1441,11 @@ function validate(a,rows){
   let sxy=0,sxx=0,syy=0;pairs.forEach(([x,y])=>{sxy+=(x-mx)*(y-my);sxx+=(x-mx)**2;syy+=(y-my)**2});
   const r=sxx&&syy?sxy/Math.sqrt(sxx*syy):0,mae=median(tab.map(t=>Math.abs(t.err)));
   Object.assign(out,{k,r,mae,tab,
-    sentence:`Here VIIRS records about ${k.toFixed(1)}× more hotspots than MODIS for the same fires, so joining the raw records would inflate every year after ${ERA_END} by that much. Scaled by the ratio, MODIS predicts each overlap year's VIIRS total within a median ${mae.toFixed(0)}% (leave-one-year-out, ${years[0]}–${years.at(-1)}), and month by month the two agree with r = ${r.toFixed(2)}.`});
+    sentence:`Here ${ref} records about ${k.toFixed(1)}× more hotspots than MODIS for the same fires, so joining the raw records would inflate every year from ${vFrom} on by that much: the jump in the orange line. The harmonized line has no jump. Scaled by a single ratio, MODIS predicts each overlap year's ${ref} total within a median ${mae.toFixed(0)}% (leave-one-year-out, ${years[0]}–${years.at(-1)}), and month by month the two agree with r = ${r.toFixed(2)}.`});
   return out}
 async function renderMethod(){
   const forArea=area;$('mSum').textContent='Loading the raw sensor counts…';
-  $('mMethod').textContent=`${H.meta.method||''}${H.provisional?' (provisional).':'.'} Reference sensor: ${H.meta.reference}.`;
+  $('mMethod').textContent=`${(H.meta.method||'').replace(/\.\s*$/,'')}${H.provisional?' (provisional).':'.'} Reference sensor: ${H.meta.reference}.`;
   let V;try{V=await validationFor(forArea)}catch(err){if(area===forArea){$('mSum').textContent=`Could not load the raw sensor counts (${err.message}).`;['mAnnual','mOver'].forEach(i=>$(i).innerHTML='');$('mTab').innerHTML=''}return}
   if(area!==forArea||$('p-method').hidden)return;
   $('mSum').innerHTML=(realData(area)?'':'<b>Illustrative data.</b> ')+V.sentence;
@@ -1435,9 +1454,9 @@ async function renderMethod(){
   const mx=Math.max(1,...A.map(o=>Math.max(o.modis,o.viirs,o.harm)))*1.08,x=i=>L+(W-L-R)*i/Math.max(1,n-1),y=v=>T+(Hh-T-B)*(1-v/mx);
   const line=(f,col,w,dash,from)=>{const pts=A.map((o,i)=>[i,f(o),o]).filter(p=>p[2].y>=(from||0));return`<path d="M${pts.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('L')}" fill="none" stroke="${col}" stroke-width="${w}" ${dash?`stroke-dasharray="${dash}"`:''}/>`};
   let h='';[0,.5,1].forEach(f=>{const v=Math.round(mx*f);h+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${v>=1000?Math.round(v/100)/10+'k':v}</text>`});
-  const sx=x(A.findIndex(o=>o.y===ERA_END+1));if(sx)h+=`<line x1="${sx}" x2="${sx}" y1="${T}" y2="${Hh-B}" stroke="var(--text-3)" stroke-dasharray="2 3"/>`+placeLabels(W,L,T+10,[{t:'VIIRS reference',x:sx+4,align:'start'}],11);
-  h+=line(o=>o.modis,'var(--text-3)',1.5,'4 3')+line(o=>o.viirs,'#E8590C',2,null,ERA_END+1)+line(o=>o.harm,'var(--text)',2.5);
-  A.forEach((o,i)=>{h+=`<rect x="${x(i)-4}" y="${T}" width="8" height="${Hh-T-B}" fill="transparent" data-tip="${o.y}: harmonized ${o.harm.toLocaleString()} · VIIRS ${o.viirs.toLocaleString()} · MODIS ${o.modis.toLocaleString()}"/>`;
+  const vi=A.findIndex(o=>o.y===V.vFrom),sx=vi>=0?x(vi):0;if(sx)h+=`<line x1="${sx}" x2="${sx}" y1="${T}" y2="${Hh-B}" stroke="var(--text-3)" stroke-dasharray="2 3"/>`+placeLabels(W,L,T+10,[{t:'VIIRS starts',x:sx+4,align:'start'}],11);
+  h+=line(o=>o.modis,'var(--text-3)',1.5,'4 3')+line(o=>o.viirs,'#E8590C',2,null,V.vFrom)+line(o=>o.harm,'var(--text)',2.5);
+  A.forEach((o,i)=>{h+=`<rect x="${x(i)-4}" y="${T}" width="8" height="${Hh-T-B}" fill="transparent" data-tip="${o.y}: harmonized ${o.harm.toLocaleString()} · VIIRS ${o.viirs==null?'not flying':o.viirs.toLocaleString()} · MODIS ${o.modis.toLocaleString()}"/>`;
   });
   h+=placeLabels(W,L-2,Hh-4,[0,n-1,...A.map((o,i)=>i).filter(i=>(A[i].y-1)%5===0)].map(i=>({t:String(A[i].y),x:x(i)})),11,4,2);
   svg.innerHTML=h;
@@ -1449,8 +1468,8 @@ async function renderMethod(){
   let h2='';[0,.5,1].forEach(f=>{const v=Math.round(mx2*f);h2+=`<line x1="${L}" x2="${W2-R}" y1="${y2(v)}" y2="${y2(v)}" stroke="var(--border)"/><text x="${L-6}" y="${y2(v)+4}" text-anchor="end">${v>=1000?Math.round(v/100)/10+'k':v}</text>`});
   mo.forEach((o,i)=>{h2+=`<rect x="${L+i*bw+.5}" y="${y2(o.obs)}" width="${Math.max(1,bw-1)}" height="${H2-B-y2(o.obs)}" fill="var(--surface-3)" data-tip="${MONTHS[o.m]} ${o.yy}: VIIRS ${o.obs} · adjusted MODIS ${Math.round(o.pred)}"/>`;if(o.m===0)h2+=`<text x="${L+i*bw}" y="${H2-4}">${o.yy}</text>`});
   h2+=`<path d="M${mo.map((o,i)=>`${(L+(i+.5)*bw).toFixed(1)},${y2(o.pred).toFixed(1)}`).join('L')}" fill="none" stroke="#E8590C" stroke-width="1.8"/>`;
-  ov.innerHTML=h2;$('mOverTitle').textContent=`Overlap years ${V.years[0]}–${V.years.at(-1)}: VIIRS vs adjusted MODIS`;
-  $('mTab').innerHTML=`<tr><th>Year</th><th>MODIS raw</th><th>VIIRS observed</th><th>Predicted</th><th>Error</th></tr>`+
+  ov.innerHTML=h2;$('mOverTitle').textContent=`Overlap years ${V.years[0]}–${V.years.at(-1)}: ${V.ref} vs adjusted MODIS`;$('mOverObs').textContent=`${V.ref} (observed)`;
+  $('mTab').innerHTML=`<tr><th>Year</th><th>MODIS raw</th><th>${V.ref.replace('VIIRS ','')} observed</th><th>Predicted</th><th>Error</th></tr>`+
     V.tab.map(t=>`<tr><td>${t.y}</td><td>${t.modis.toLocaleString()}</td><td>${t.obs.toLocaleString()}</td><td>${t.pred.toLocaleString()}</td><td>${t.err>=0?'+':''}${t.err.toFixed(0)}%</td></tr>`).join('')}
 
 /* ================= tooltip ================= */

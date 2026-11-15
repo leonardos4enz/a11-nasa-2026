@@ -320,14 +320,25 @@ async function handleHarmonizedRaw(req, res) {
   try {
     const bad = await checkArea(geo);
     if (bad) return sendJson(res, 200, { error: bad });
-    const { rows } = await pool.query(
+    // Same filters as the harmonization (polygon_monthly_cells: nominal/high confidence, no static
+    // sources), so raw and harmonized compare like with like. Falls back to the unfiltered counts if the
+    // v2 function is missing.
+    const rawQuery = (fn, n) => pool.query(
       `SELECT to_char(r.month, 'YYYY-MM') AS month,
-              coalesce(sum(r.hotspots) FILTER (WHERE r.satellite IN ('Terra', 'Aqua')), 0)::int AS modis,
-              coalesce(sum(r.hotspots) FILTER (WHERE r.satellite = 'NOAA20'), 0)::int AS noaa20,
-              coalesce(sum(r.hotspots) FILTER (WHERE r.satellite = 'SNPP'), 0)::int AS snpp,
-              coalesce(sum(r.hotspots) FILTER (WHERE r.satellite = 'NOAA21'), 0)::int AS noaa21
-       FROM polygon_monthly_raw(${geo.sql}) r GROUP BY r.month ORDER BY r.month`, [geo.param]);
-    const out = { months: rows };
+              coalesce(sum(r.${n}) FILTER (WHERE r.satellite IN ('Terra', 'Aqua')), 0)::int AS modis,
+              coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'NOAA20'), 0)::int AS noaa20,
+              coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'SNPP'), 0)::int AS snpp,
+              coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'NOAA21'), 0)::int AS noaa21
+       FROM ${fn}(${geo.sql}) r GROUP BY r.month ORDER BY r.month`, [geo.param]);
+    let rows, filters = "harmonization";
+    try {
+      ({ rows } = await rawQuery("polygon_monthly_cells", "n"));
+    } catch (err) {
+      console.error("raw query (filtered) failed, using unfiltered counts", err.message);
+      ({ rows } = await rawQuery("polygon_monthly_raw", "hotspots"));
+      filters = "vegetation fires only";
+    }
+    const out = { months: rows, filters };
     cache.set(`raw:${geo.key}`, { t: Date.now(), body: out });
     return sendJson(res, 200, out);
   } catch (err) {

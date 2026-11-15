@@ -67,6 +67,10 @@
 @keyframes ag-pulse { 50% { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .ember-msg.acts.agent.run .acts-head > span { animation: none; } }
 
+/* Reply reveal: each word fades up in turn (assistant.js reveal) */
+.ember-w { display: inline-block; animation: ember-w .38s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes ember-w { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+
 .ember-typing { display: inline-flex; gap: 4px; padding: 6px 0; }
 .ember-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: ember-dot 1.2s infinite ease-in-out; }
 .ember-typing i:nth-child(2) { animation-delay: .15s; }

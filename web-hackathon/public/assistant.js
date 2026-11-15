@@ -170,6 +170,33 @@
     }
   }
 
+  // ---- New replies appear word by word (a fade-up per word), not all at once ----
+  // Uses the reply's age so a re-render mid-animation continues where it was instead of starting over.
+  const REVEAL_MAX = 1600; // ms for the whole reply, whatever its length
+  function reveal(el, t) {
+    const age = Date.now() - (t || 0);
+    if (!t || age > REVEAL_MAX + 600 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const nodes = [];
+    const walk = (n) => n.childNodes.forEach((c) => (c.nodeType === 3 ? nodes.push(c) : walk(c)));
+    walk(el);
+    const words = nodes.reduce((k, n) => k + (n.data.match(/\S+/g) || []).length, 0);
+    const per = Math.min(38, REVEAL_MAX / Math.max(1, words));
+    let i = 0;
+    nodes.forEach((n) => {
+      const frag = document.createDocumentFragment();
+      n.data.split(/(\s+)/).forEach((p) => {
+        if (!p) return;
+        if (/^\s+$/.test(p)) return frag.appendChild(document.createTextNode(p));
+        const s = document.createElement("span");
+        s.className = "ember-w";
+        s.style.animationDelay = `${Math.round(i++ * per - age)}ms`;
+        s.textContent = p;
+        frag.appendChild(s);
+      });
+      n.replaceWith(frag);
+    });
+  }
+
   // ---- Sub-agent cards: the Researcher (blue Ember) searches the project documents for Ember ----
   const AGENTS = { researcher: { name: "Researcher", color: "blue" } };
   let minis = []; // mini Embers alive in the log, destroyed on every render
@@ -254,7 +281,7 @@
       }
       const el = document.createElement("div");
       el.className = "ember-msg " + m.role;
-      if (m.role === "bot") el.innerHTML = md(m.text);
+      if (m.role === "bot") { el.innerHTML = md(m.text); reveal(el, m.t); }
       else if (m.role === "confirm") {
         // Ember asks before doing something with consequences (a download). Only the live question has buttons.
         const live = pendingConfirm && pendingConfirm.item === m;
@@ -313,7 +340,7 @@
           if (d.id && history.some((h) => h.id === d.id)) return;
           history.push(d.agent ? agentStep(d) : { role: "act", text: String(d.label || "Step"), state: d.ok === false ? "fail" : "ok" });
         });
-        if (data.reply) history.push({ role: "bot", text: data.reply });
+        if (data.reply) history.push({ role: "bot", text: data.reply, t: Date.now() });
         if (!actions.length || !agentUI) {
           if (!data.reply) history.push({ role: "bot", text: "(empty reply)" });
           if (/\b(thanks|thank you|gracias)\b/i.test(q)) mood("thankful", 3000);

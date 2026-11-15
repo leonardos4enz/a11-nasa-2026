@@ -26,10 +26,18 @@ and farmers or communities that follow burn regulations.
 - FireCast, the team's own 72-hour forecast model trained on VIIRS NOAA-20 history.
 
 ## Areas covered
-The calendar ships with areas of interest in Mexico and the United States, such as Santiago (Nuevo León), Sierra de
-Arteaga, Ocosingo (Chiapas), Butte County (California), the Flagstaff and Coconino forests (Arizona), the Flint Hills
-(Kansas), the Arkansas Delta and the Everglades (Florida). Users can also draw their own polygon or create a circle
-around a point; any area up to 100,000 km² is computed on the fly.
+The calendar ships with 18 areas of interest in Mexico and the United States.
+
+- Mexico: Santiago (Nuevo León), Sierra de Arteaga, Ocosingo (Chiapas), Los Chimalapas (Oaxaca, record fires in
+  2024), the Sierra Madre de Chiapas (La Sepultura), the Sierra Tarahumara (Guachochi, Chihuahua, record year 2011),
+  Calakmul (Campeche) and Tizimín (Yucatán, agricultural burning).
+- United States: Butte County (California, Camp Fire 2018), the Flagstaff and Coconino forests (Arizona), the Flint
+  Hills (Kansas), the Arkansas Delta, the Everglades (Florida), Okanogan (Washington, Carlton Complex 2014),
+  Klamath–Siskiyou (Oregon, Biscuit Fire 2002), Yosemite and Stanislaus (California, Rim Fire 2013), Plumas County
+  (California, Dixie Fire 2021) and the Okefenokee Swamp (Georgia, 2007 and 2011).
+
+Users can also draw their own polygon or create a circle around a point; any area up to 100,000 km² is computed on
+the fly.
 
 ## How it is built
 A daily n8n pipeline downloads FIRMS data into a PostgreSQL/PostGIS database. SQL functions count hotspots per month

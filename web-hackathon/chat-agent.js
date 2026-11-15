@@ -214,7 +214,7 @@ You can USE THE PAGE for the user with tools (the user watches your cursor do it
 - tabs, map layers, hotspot filters, a point with a radius, dark/light mode, play the timeline → the matching tool.
 - "descarga / download / export <file>" → download_report. The user must accept it in the chat; if the result says they declined, just acknowledge it (do not retry). Never say a file was downloaded unless the result has "ok": true.
 - If you are not sure what is on screen, call get_view.
-- Questions about the project, the satellites, the method, definitions or how to use the site → search_docs (if available), then answer from the sections it returns; mention the document when useful. Do not invent facts that are not in the docs or the data.
+- Questions about the project, the satellites, the method, definitions or how to use the site → search_docs (if available) ONCE with one focused query (search again only if the first results clearly do not cover the question), then answer from the sections it returns; mention the document when useful. Do not invent facts that are not in the docs or the data.
 Use page actions ONLY when the user asks to change or show something on the page. For questions ("is this month unusual?", "when is the fire season?", "compare with 2024") answer from the [App context] line, and if you need other months use get_month_data, which reads the numbers WITHOUT moving the page. Never explore by moving the timeline month after month.
 Do the actions the request needs, in order; request independent actions together in one turn, and do not repeat an action that already succeeded. Use as few steps as possible (at most 3–4). After acting, answer briefly with what changed and what is notable, using only the numbers the tools return.
 
@@ -441,7 +441,9 @@ function createAgent({ pool, rag }) {
   }
 
   // input: { message } for a new user turn, or { toolResults: [{ id, result }] } to resume after page actions.
-  async function run(sessionId, input) {
+  // onEvent (optional): progress for the streaming endpoint ({type:"thinking"|"step"|"checking", ...}).
+  async function run(sessionId, input, onEvent) {
+    const emit = (ev) => { if (onEvent) try { onEvent(ev); } catch {} };
     const L = await langchain();
     const { act, answer, plain } = await getModels();
     const loaded = await store.load(sessionId);
@@ -528,6 +530,7 @@ function createAgent({ pool, rag }) {
           ? [...msgs, new L.HumanMessage("[Step limit reached. Do not call any more tools: answer my question now, briefly, with what you already know.]")]
           : msgs;
         // tool_choice "none" is not supported everywhere; fall back to the normal model and drop any tool calls.
+        emit({ type: "thinking", step: steps + 1 });
         const ai = final ? await answer.invoke(prompt).catch(() => act.invoke(prompt)) : await act.invoke(prompt);
         steps++;
         const text = cleanScript(stripThink(textOf(ai.content)), lastHuman?.c);
@@ -538,6 +541,7 @@ function createAgent({ pool, rag }) {
         msgs.push(deserialize(row, L));
         if (text) lastText = text;
         if (!calls.length) {
+          emit({ type: "checking" });
           row.c = await grounded(row); // the stored reply is the checked one
           return { reply: row.c || (final ? FALLBACK_REPLY : ""), actions: [], done };
         }
@@ -549,6 +553,8 @@ function createAgent({ pool, rag }) {
             continue;
           }
           const tool = SERVER_TOOL_BY_NAME.get(call.name);
+          const label = tool && tool.label ? tool.label(call.args) : call.name;
+          if (tool) emit({ type: "step", id: call.id, agent: tool.agent, label, state: "run", query: String((call.args && call.args.query) || "").slice(0, 120) });
           let result;
           try {
             result = tool ? await tool.run(call.args) : { ok: false, error: `Unknown tool ${call.name}.` };
@@ -556,12 +562,13 @@ function createAgent({ pool, rag }) {
             result = { ok: false, error: err.message };
           }
           if (tool) {
-            const step = { label: tool.label ? tool.label(call.args) : call.name, ok: result.ok !== false };
+            const step = { id: call.id, label, ok: result.ok !== false };
             if (tool.agent) {
               step.agent = tool.agent;
               try { Object.assign(step, tool.report ? tool.report(call.args, result || {}) : {}); } catch {}
             }
             done.push(step);
+            emit({ type: "step", ...step, state: step.ok ? "ok" : "fail" });
           }
           const toolRow = { r: "tool", id: call.id, c: clip(JSON.stringify(result), 4000) };
           toSave.push(toolRow);

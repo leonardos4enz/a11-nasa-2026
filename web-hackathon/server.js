@@ -128,6 +128,21 @@ async function handleAgentChat(res, payload, sessionId, message) {
       final: payload.final === true, // the browser's step budget is spent: answer without more actions
     };
   }
+  // stream: true -> NDJSON, one event per line while the agent works ({type:"thinking"}, {type:"step", ...}),
+  // then {type:"final", reply, actions, done}. Without it, one JSON answer as before.
+  if (payload.stream === true) {
+    res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Accel-Buffering": "no" });
+    const emit = (ev) => { try { if (!res.writableEnded) res.write(JSON.stringify(ev) + "\n"); } catch {} };
+    emit({ type: "start" });
+    try {
+      const out = await agent.run(sessionId, input, emit);
+      emit({ type: "final", reply: out.reply, actions: out.actions, done: out.done || [], sessionId });
+    } catch (err) {
+      console.error("agent error", err.status || "", err.message);
+      emit({ type: "final", error: "The assistant is unavailable right now." });
+    }
+    return res.end();
+  }
   try {
     const out = await agent.run(sessionId, input);
     return sendJson(res, 200, { reply: out.reply, actions: out.actions, done: out.done || [], sessionId });

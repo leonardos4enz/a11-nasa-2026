@@ -132,30 +132,73 @@
   }
   if (window.EmberAgent) window.EmberAgent.confirm = confirmInChat;
 
+  // ---- Talking to /api/chat ----
+  // Asks for a stream (NDJSON: progress events, then {type:"final"}); a server that answers plain JSON (the n8n
+  // backend, the local mock) still works. Returns { r, data } with data = the final answer.
+  async function postChat(req, onEvent) {
+    const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...req, stream: true }) });
+    if (!/ndjson/.test(r.headers.get("content-type") || "") || !r.body) return { r, data: await r.json() };
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = "", data = null;
+    const line = (l) => {
+      if (!l.trim()) return;
+      let ev; try { ev = JSON.parse(l); } catch { return; }
+      if (ev.type === "final") data = ev; else onEvent(ev);
+    };
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let n;
+      while ((n = buf.indexOf("\n")) >= 0) { line(buf.slice(0, n)); buf = buf.slice(n + 1); }
+    }
+    line(buf);
+    return { r, data: data || { error: "The answer was cut off. Try again." } };
+  }
+  const agentStep = (d) => ({ role: "agent", id: d.id ? String(d.id) : undefined, who: String(d.agent), query: String(d.query || ""),
+    found: Array.isArray(d.found) ? d.found.slice(0, 4) : [], state: d.state === "run" ? "run" : d.ok === false || d.state === "fail" ? "fail" : "ok", t: Date.now() });
+  // Live progress while the server works: the model thinking, the Researcher searching, the final check.
+  function onProgress(ev) {
+    if (ev.type === "thinking") { mood("thinking"); stateEl.textContent = "Thinking…"; }
+    else if (ev.type === "checking") { stateEl.textContent = "Checking the numbers…"; }
+    else if (ev.type === "step" && ev.agent) {
+      const item = ev.id && history.find((h) => h.role === "agent" && h.id === String(ev.id));
+      if (item) Object.assign(item, agentStep(ev));
+      else history.push(agentStep(ev));
+      if (ev.state === "run") { mood("waiting"); stateEl.textContent = `${(AGENTS[ev.agent] || { name: ev.agent }).name} is searching the docs…`; }
+      save(); render();
+    }
+  }
+
   // ---- Sub-agent cards: the Researcher (blue Ember) searches the project documents for Ember ----
   const AGENTS = { researcher: { name: "Researcher", color: "blue" } };
   let minis = []; // mini Embers alive in the log, destroyed on every render
-  // One compact line ("Invoked Researcher · 3 docs") with the docs stacked underneath; click to see the question and
-  // the sections it used. Same look as the page-action stack.
-  function agentCard(m, key) {
-    const a = AGENTS[m.who] || { name: m.who, color: "blue" };
+  // One compact line per turn ("Invoked Researcher · 3 docs") with the docs stacked underneath; click to see each
+  // question and the sections it used. While a search runs the line says so and the blue Ember reads.
+  function agentCard(items, key) {
+    const a = AGENTS[items[0].who] || { name: items[0].who, color: "blue" };
     const el = document.createElement("div");
-    const found = m.found || [];
-    const none = m.state !== "fail" && !found.length;
+    const running = items.find((m) => m.state === "run");
+    const docs = items.reduce((n, m) => n + (m.found || []).length, 0);
+    const failed = items.every((m) => m.state === "fail");
+    const none = !running && !failed && !docs;
     const open = openStacks.has(key);
-    el.className = `ember-msg acts agent${found.length > 1 ? " multi" : ""}${found.length > 2 ? " many" : ""}${open ? " open" : ""}` +
-      `${m.state === "fail" ? " fail" : none ? " none" : ""}`;
-    const meta = m.state === "fail" ? "failed" : none ? "no docs" : `${found.length} doc${found.length > 1 ? "s" : ""}`;
+    el.className = `ember-msg acts agent${docs > 1 || items.length > 1 ? " multi" : ""}${docs > 2 ? " many" : ""}${open ? " open" : ""}` +
+      `${running ? " run" : failed ? " fail" : none ? " none" : ""}`;
+    const what = running
+      ? ` · searching <q>${esc(running.query || "the docs")}</q>…`
+      : items.length > 1 ? ` · ${items.length} searches` : items[0].query ? ` · <q>${esc(items[0].query)}</q>` : "";
+    const meta = running ? "" : failed ? "failed" : none ? "no docs" : `${docs} doc${docs > 1 ? "s" : ""}`;
+    const list = items.map((m) =>
+      `<li class="ag-ask"><span>${m.state === "run" ? "Searching" : "Asked"}: “${esc(m.query || "")}”${m.state === "run" ? "…" : ""}</span></li>` +
+      (m.state === "run" ? "" : (m.found || []).length
+        ? m.found.map((f) => `<li class="ag-doc" title="${esc(f.document)} — ${esc(f.section)}"><i></i><span><b>${esc(f.document)}</b> · ${esc(f.section)}</span></li>`).join("")
+        : `<li class="ag-doc skip"><i></i><span>${m.state === "fail" ? "The search failed" : "Nothing relevant in the docs"}</span></li>`)).join("");
     el.innerHTML =
       `<button type="button" class="acts-head" aria-expanded="${open}"><span class="ag-pet" aria-hidden="true"></span>` +
-      `<span>Invoked <b>${esc(a.name)}</b>${m.query ? ` · <q>${esc(m.query)}</q>` : ""}</span><small>${meta}</small>` +
+      `<span>${running ? "Invoking" : "Invoked"} <b>${esc(a.name)}</b>${what}</span>${meta ? `<small>${meta}</small>` : ""}` +
       `<svg class="i chev" aria-hidden="true"><use href="#i-down"/></svg></button>` +
-      `<ol class="acts-list"${open ? "" : " hidden"}>` +
-      (m.query ? `<li class="ag-ask"><span>Asked: “${esc(m.query)}”</span></li>` : "") +
-      (found.length
-        ? found.map((f) => `<li class="ag-doc" title="${esc(f.document)} — ${esc(f.section)}"><i></i><span><b>${esc(f.document)}</b> · ${esc(f.section)}</span></li>`).join("")
-        : `<li class="ag-doc skip"><i></i><span>${m.state === "fail" ? "The search failed" : "Nothing relevant in the docs"}</span></li>`) +
-      `</ol>`;
+      `<ol class="acts-list"${open ? "" : " hidden"}>${list}</ol>`;
     el.querySelector(".acts-head").onclick = (e) => {
       const nowOpen = !openStacks.has(key);
       nowOpen ? openStacks.add(key) : openStacks.delete(key);
@@ -167,13 +210,16 @@
     if (window.Ember) {
       const pet = Ember.create(el.querySelector(".ag-pet"), { color: a.color });
       minis.push(pet);
-      // Just arrived: reads, finds, then settles. Based on the card's age so re-renders do not restart it.
-      const end = m.state === "fail" ? "sad" : none ? "doubt" : "proud";
-      const steps = [[0, "reading"], [1100, none || m.state === "fail" ? end : "found"], [2600, end]];
-      const age = Date.now() - (m.t || 0);
-      let cur = steps[0];
-      steps.forEach((s) => { if (age >= s[0]) cur = s; else setTimeout(() => pet.gesture(s[1]), s[0] - age); });
-      pet.gesture(cur[1]);
+      if (running) pet.gesture("reading");
+      else {
+        // Just finished: finds, then settles. Based on the last search's age so re-renders do not restart it.
+        const end = failed ? "sad" : none ? "doubt" : "proud";
+        const steps = [[0, failed || none ? end : "found"], [1500, end]];
+        const age = Date.now() - Math.max(...items.map((m) => m.t || 0));
+        let cur = steps[0];
+        steps.forEach((st) => { if (age >= st[0]) cur = st; else setTimeout(() => pet.gesture(st[1]), st[0] - age); });
+        pet.gesture(cur[1]);
+      }
     }
     return el;
   }
@@ -185,11 +231,16 @@
     log.innerHTML = "";
     const stacks = new Map(); // index of the turn's first action -> its actions
     let first = -1;
+    const agentGroups = new Map(); // index of the turn's first sub-agent step -> its steps
+    let firstAgent = -1;
     history.forEach((m, i) => {
-      if (m.role === "user") first = -1;
+      if (m.role === "user") { first = -1; firstAgent = -1; }
       else if (m.role === "act") {
         if (first < 0) { first = i; stacks.set(i, []); }
         stacks.get(first).push(m);
+      } else if (m.role === "agent") {
+        if (firstAgent < 0) { firstAgent = i; agentGroups.set(i, []); }
+        agentGroups.get(firstAgent).push(m);
       }
     });
     history.forEach((m, i) => {
@@ -197,7 +248,10 @@
         if (stacks.has(i)) log.appendChild(actionStack(i, stacks.get(i)));
         return;
       }
-      if (m.role === "agent") { log.appendChild(agentCard(m, "agent" + (m.t || i))); return; }
+      if (m.role === "agent") {
+        if (agentGroups.has(i)) log.appendChild(agentCard(agentGroups.get(i), "agent" + (m.id || m.t || i)));
+        return;
+      }
       const el = document.createElement("div");
       el.className = "ember-msg " + m.role;
       if (m.role === "bot") el.innerHTML = md(m.text);
@@ -244,8 +298,7 @@
       // The agent may answer with page actions; play them with the Ember cursor, send the results back, repeat.
       let req = { message: (q + contextSuffix()).slice(0, 2000), sessionId };
       for (let step = 0; step < MAX_STEPS; step++) {
-        const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req) });
-        const data = await r.json();
+        const { r, data } = await postChat(req, (ev) => { clearTimeout(slow); onProgress(ev); });
         if (!r.ok || data.error) {
           history.push({ role: "err", text: data.error || "Something went wrong.", retry: q });
           mood("failed", 3000);
@@ -255,9 +308,11 @@
         const actions = Array.isArray(data.actions) ? data.actions : [];
         // Steps the server already ran (e.g. the document search) join the turn's action stack.
         // A step with `agent` (the Researcher's document search) gets its own card with a small blue Ember.
-        if (Array.isArray(data.done)) data.done.forEach((d) => history.push(d.agent
-          ? { role: "agent", who: String(d.agent), query: String(d.query || ""), found: Array.isArray(d.found) ? d.found.slice(0, 4) : [], state: d.ok === false ? "fail" : "ok", t: Date.now() }
-          : { role: "act", text: String(d.label || "Step"), state: d.ok === false ? "fail" : "ok" }));
+        // Steps already shown live (streamed) are not added twice.
+        if (Array.isArray(data.done)) data.done.forEach((d) => {
+          if (d.id && history.some((h) => h.id === d.id)) return;
+          history.push(d.agent ? agentStep(d) : { role: "act", text: String(d.label || "Step"), state: d.ok === false ? "fail" : "ok" });
+        });
         if (data.reply) history.push({ role: "bot", text: data.reply });
         if (!actions.length || !agentUI) {
           if (!data.reply) history.push({ role: "bot", text: "(empty reply)" });

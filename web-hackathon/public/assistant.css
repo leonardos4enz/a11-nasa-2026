@@ -63,6 +63,9 @@
 .ember-msg.acts.agent .ag-doc i { background: var(--ag); border-radius: 2px; width: 7px; height: 9px; }
 .ember-msg.acts.agent .ag-doc.skip i { background: var(--text-3); }
 .ember-msg.acts.agent.fail { --ag: var(--warn); }
+.ember-msg.acts.agent.run .acts-head > span:not(.ag-pet) { animation: ag-pulse 1.4s ease-in-out infinite; }
+@keyframes ag-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .ember-msg.acts.agent.run .acts-head > span { animation: none; } }
 
 .ember-typing { display: inline-flex; gap: 4px; padding: 6px 0; }
 .ember-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: ember-dot 1.2s infinite ease-in-out; }

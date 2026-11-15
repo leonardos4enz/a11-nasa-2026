@@ -67,7 +67,25 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == "/api/hotspots":
             return self.mock_hotspots(req)
         if self.path == "/api/chat":
-            return self.send(200, json.dumps(self.mock_chat(req)).encode())
+            out = self.mock_chat(req)
+            if req.get("stream") and out.get("done"):  # stream like server.js: progress events, then the final answer
+                import time
+                self.send_response(200)
+                self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                def ev(o, wait=0.0):
+                    self.wfile.write((json.dumps(o) + "\n").encode()); self.wfile.flush(); time.sleep(wait)
+                ev({"type": "start"})
+                ev({"type": "thinking", "step": 1}, 1.2)
+                for d in out["done"]:
+                    ev({"type": "step", **d, "state": "run", "found": []}, 2.0)
+                    ev({"type": "step", **d, "state": "ok" if d.get("ok", True) else "fail"})
+                ev({"type": "thinking", "step": 2}, 1.2)
+                ev({"type": "checking"}, 0.6)
+                ev({"type": "final", **out})
+                return
+            return self.send(200, json.dumps(out).encode())
         self.send(404, b'{"error":"not found"}')
 
     # MOCK of the Ember agent (the real one is chat-agent.js): turns "busca X", "pon <month> <year>", "dark mode",
@@ -118,13 +136,20 @@ class Handler(SimpleHTTPRequestHandler):
         if "loop" in low:
             return {"reply": "", "actions": [{"id": "loop_0", "name": "get_month_data", "args": {"year": 2024}}]}
         if "docs" in low or "how does" in low or "nothing" in low:  # the Researcher card (document search)
+            if "twice" in low:  # two searches in one turn -> one grouped Researcher line
+                return {"reply": "(mock) Two searches, one line.", "actions": [], "done": [
+                    {"id": f"mock_a_{random.random()}", "label": "Searching the docs", "ok": True, "agent": "researcher",
+                     "query": "MODIS VIIRS resolution difference", "found": [{"document": "Satellites and hotspots", "section": "Why VIIRS counts more"}]},
+                    {"id": f"mock_b_{random.random()}", "label": "Searching the docs", "ok": True, "agent": "researcher",
+                     "query": "harmonization factors by month", "found": [{"document": "How the counts are harmonized", "section": "The calibration chain"},
+                                                                          {"document": "Harmonization details", "section": "Validation"}]}]}
             found = [] if "nothing" in low else [
                 {"document": "How the counts are harmonized", "section": "The calibration chain"},
                 {"document": "Harmonization details", "section": "Validation"},
                 {"document": "Satellites and hotspots", "section": "Why VIIRS counts more"}]
             return {"reply": "(mock) MODIS is scaled to the VIIRS NOAA-20 level by region and month (docs: How the counts are harmonized).",
-                    "actions": [], "done": [{"label": "Searching the docs", "ok": True, "agent": "researcher",
-                                             "query": q[:120], "found": found}]}
+                    "actions": [], "done": [{"id": f"mock_docs_{random.random()}", "label": "Searching the docs", "ok": True,
+                                             "agent": "researcher", "query": q[:120], "found": found}]}
         if "demo" in low:
             actions = [("select_area", {"query": "Santiago"}), ("set_month", {"year": 2024, "month": 4}),
                        ("set_hotspot_filter", {"fire_types": ["vegetation", "industrial"]}), ("open_tab", {"tab": "season"})]

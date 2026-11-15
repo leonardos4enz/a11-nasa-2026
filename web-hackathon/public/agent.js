@@ -176,14 +176,17 @@
       ready();
       const y = year ? Math.round(+year) : sel.y;
       if (!(y >= Y0 && y <= CY)) return { ok: false, error: `Years go from ${Y0} to ${CY}.` };
+      // One "typical" per month for the whole answer: the median of the baseline years without the year asked
+      // (what the page compares against). The peaks are ranked on these same numbers, or the model would quote
+      // two typicals for one month (typical() also counts the year asked).
+      const typ = MONTHS.map((_, m) => Math.round(median(base(area, y, m))));
       const months = MONTHS.map((name, m) => {
         const v = val(area, y, m);
-        if (v == null) return { month: name, future: true };
+        if (v == null) return { month: name, future: true, typical: typ[m] };
         const c = classify(v, base(area, y, m));
         const l = lo(area, y, m), h = hi(area, y, m);
-        return { month: name, count: v, ...(l !== v || h !== v ? { estimate_low: l, estimate_high: h } : {}), category: CATS[c.k].l, typical: Math.round(c.med), ...(isPartial(y, m) ? { partial: true } : {}) };
+        return { month: name, count: v, ...(l !== v || h !== v ? { estimate_low: l, estimate_high: h } : {}), category: CATS[c.k].l, typical: typ[m], ...(isPartial(y, m) ? { partial: true } : {}) };
       });
-      const typ = typeof typical === "function" ? typical() : [];
       const peak = typ.map((t, m) => ({ month: MONTHS[m], typical: t })).sort((a, b) => b.typical - a.typical).slice(0, 3);
       return { ok: true, area: area.name, year: y, months, peak_months_typical: peak, baseline: `${typeof B0 !== "undefined" ? B0 : Y0}–${Y1}` };
     },

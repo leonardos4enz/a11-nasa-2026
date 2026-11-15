@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-/* EmberAtlas pitch deck, 7 slides (global judging limit), 1920x1080 canvas.
+/* EmberAtlas pitch deck, final version: 7 slides (global judging limit), 1920x1080 canvas.
+   Story: problem -> solution (live app) -> evidence -> impact -> next. Real app footage in deck/.
    Keys: arrows / space / PgUp PgDn / Home End, F = fullscreen. ?print (or Ctrl+P) = one slide per page for a PDF. */
 :root{
   --ink:#0E0D0C;--ink-2:#171514;--ink-3:#211F1D;--line:#34302C;
@@ -31,19 +32,18 @@ body{font:400 28px/1.4 Inter,system-ui,sans-serif;color:var(--t1);-webkit-font-s
 /* ---------- chrome ---------- */
 .corner{position:absolute;top:60px;right:72px;z-index:3}
 .corner .logo{display:block;height:40px;width:auto}
-.foot{position:absolute;left:72px;right:72px;bottom:44px;display:flex;justify-content:space-between;align-items:flex-end;font:500 19px/1.3 var(--mono);color:var(--t3);z-index:3}
+.foot{position:absolute;left:72px;right:72px;bottom:40px;display:flex;justify-content:space-between;align-items:flex-end;font:500 18px/1.3 var(--mono);color:var(--t3);z-index:3}
 .light .foot{color:var(--d3)}
 .heatline{position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--f1),var(--f2) 30%,var(--f4) 60%,transparent 85%)}
-.num{font:800 30px/1 var(--mono);color:var(--f1);margin:0 0 22px}
+.num{font:800 28px/1 var(--mono);color:var(--f1);margin:0 0 18px}
 .light .num{color:var(--f3)}
 h1,h2{font-family:var(--display);font-weight:900;margin:0;line-height:.95}
-h2{font-size:84px;max-width:1500px;text-transform:uppercase}
-.top{position:absolute;left:72px;top:68px;right:220px;z-index:2}
-.lead{font-size:32px;line-height:1.4;color:var(--t2);margin:0;max-width:1100px}
-.light .lead{color:var(--d2)}
-.lead b{color:var(--t1);font-weight:600}.light .lead b{color:var(--d1)}
-.src{font:500 18px/1.4 var(--mono);color:var(--t3)}.light .src{color:var(--d3)}
-.todo{display:inline-block;font:600 18px/1 var(--mono);padding:8px 12px;border:2px dashed currentColor;border-radius:8px;color:var(--f2);vertical-align:middle}
+h2{font-size:92px;max-width:1500px;text-transform:uppercase}
+h2 em{font-style:normal;color:var(--f1)}.light h2 em{color:var(--f3)}
+.top{position:absolute;left:72px;top:64px;right:260px;z-index:2}
+.kick{font-size:32px;line-height:1.35;color:var(--t2);margin:18px 0 0;max-width:1300px}
+.light .kick{color:var(--d2)}
+.kick b{color:var(--t1);font-weight:600}.light .kick b{color:var(--d1)}
 svg text{font-family:Inter,sans-serif}
 
 /* ---------- 1 · title ---------- */
@@ -53,93 +53,98 @@ svg text{font-family:Inter,sans-serif}
 .cal .c{opacity:0}
 .slide.on .cal .c{animation:cellin .5s ease forwards}
 @keyframes cellin{to{opacity:1}}
-@media print,(prefers-reduced-motion:reduce){.cal .c{opacity:1!important;animation:none!important}}
 html.print .cal .c{opacity:1}
 .s-title .copy{position:absolute;left:120px;top:200px;width:900px;z-index:2}
 .eyebrow{font:700 24px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:40px}
 .s-title h1{margin:0;line-height:0}
 .wordmark{display:block;width:860px;height:auto;margin-left:-18px}
-.s-title .sub{font-size:38px;line-height:1.3;color:var(--t2);margin:34px 0 0;max-width:780px}
+.s-title .sub{font-size:40px;line-height:1.3;color:var(--t2);margin:34px 0 0;max-width:800px}
+.s-title .sub b{color:var(--t1);font-weight:600}
 .chip{display:inline-block;margin-top:44px;font:800 30px/1 var(--display);text-transform:uppercase;padding:16px 22px;background:var(--f1);color:var(--ink)}
 .byline{position:absolute;left:120px;bottom:120px;padding-left:26px;border-left:8px solid var(--f1);z-index:2}
 .byline b{display:block;font:700 32px/1.2 Inter;color:var(--t1)}
 .byline span{font-size:25px;color:var(--t2)}
-.coords{position:absolute;right:72px;bottom:44px;font:500 18px/1.3 var(--mono);color:var(--t3);text-align:right}
+.qr-title{position:absolute;left:850px;bottom:96px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px}
+.qr{display:block;background:#fff;padding:10px;border-radius:12px;width:200px;height:200px;flex:none}
+.qr-title .qr{width:160px;height:160px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.qr-cap{font:600 18px/1.3 var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.qr-title .qr-cap{color:var(--t2)}
 
 /* ---------- 2 · problem ---------- */
-.s-problem .chart{position:absolute;left:72px;right:72px;top:420px;height:500px}
-.s-problem .note{position:absolute;left:72px;top:318px;font-size:30px;color:var(--d2);max-width:1400px;margin:0}
+.s-problem .chart{position:absolute;left:72px;right:72px;top:380px;height:560px}
 
-/* ---------- 3 · maps ---------- */
-.maps{position:absolute;left:72px;right:72px;top:250px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
-.map canvas{display:block;width:100%;aspect-ratio:320/190;border-radius:14px;border:1px solid var(--line);background:#0A0807}
-.map .cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px}
-.map .lbl{font:700 24px/1.2 var(--mono);color:var(--t1)}
-.map .lbl small{font:500 19px/1.3 var(--mono);color:var(--t3);margin-left:12px}
-.map .n{font:800 46px/1 var(--display);color:var(--f1)}
-.map .n small{font:500 18px/1 var(--mono);color:var(--t3);margin-left:8px}
-.sattable{position:absolute;left:72px;right:72px;bottom:100px;margin:0;font:500 21px/1.5 var(--mono);color:var(--t2)}
-.sattable b{color:var(--t1);font-weight:700}
-
-/* ---------- 4 · demo ---------- */
-.frame{position:absolute;left:72px;right:600px;top:230px;bottom:100px;border-radius:16px;overflow:hidden;border:1px solid var(--paper-line);box-shadow:0 24px 60px -24px rgba(26,23,20,.35);background:var(--paper-2)}
-.frame .bar{height:42px;background:#fff;border-bottom:1px solid var(--paper-line);display:flex;align-items:center;gap:9px;padding:0 16px;font:500 17px/1 var(--mono);color:var(--d3)}
+/* ---------- app frames (real footage) ---------- */
+.frame{position:absolute;border-radius:16px;overflow:hidden;border:1px solid var(--paper-line);box-shadow:0 30px 70px -28px rgba(26,23,20,.45);background:#fff}
+.frame .bar{height:40px;background:#fff;border-bottom:1px solid var(--paper-line);display:flex;align-items:center;gap:9px;padding:0 16px;font:500 17px/1 var(--mono);color:var(--d3)}
 .frame .bar i{width:12px;height:12px;border-radius:50%;background:var(--paper-line)}
 .frame .bar span{margin-left:12px}
-.frame .view{position:absolute;top:42px;left:0;right:0;bottom:0;overflow:hidden}
-.frame iframe{border:0;width:1640px;height:1060px;transform:scale(.75);transform-origin:0 0;pointer-events:none}
-.frame .ph{position:absolute;inset:42px 0 0;display:grid;place-items:center;font:600 22px/1.4 var(--mono);color:var(--d3);text-align:center}
-.side{position:absolute;right:72px;top:230px;width:480px;bottom:100px;display:flex;flex-direction:column}
-.side ol{margin:0;padding:0 0 0 30px;font-size:26px;line-height:1.4;color:var(--d2)}
-.side li{margin-bottom:22px;padding-left:6px}
-.side li::marker{font:800 24px var(--mono);color:var(--f3)}
-.side li b{color:var(--d1)}
-.cta{margin-top:auto;display:inline-flex;align-items:center;gap:14px;font:700 23px/1 var(--mono);padding:18px 22px;background:var(--d1);color:var(--paper);border-radius:12px;text-decoration:none;align-self:flex-start}
+.frame video,.frame img{display:block;width:100%;height:calc(100% - 40px);object-fit:cover;background:var(--paper-2)}
+.live{position:absolute;top:56px;right:18px;display:flex;align-items:center;gap:10px;font:700 17px/1 var(--mono);color:#fff;background:rgba(26,23,20,.82);padding:10px 14px;border-radius:999px;letter-spacing:.06em}
+.live i{width:10px;height:10px;border-radius:50%;background:var(--f4);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* ---------- 3 · the app ---------- */
+.s-app .frame{left:72px;top:280px;width:1240px;height:705px}
+.s-app .live{top:auto;bottom:18px}
+.tile video{transform-origin:100% 0}
+.steps{position:absolute;left:1370px;right:72px;top:320px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:20px;align-items:baseline;padding:26px 0;border-top:2px solid var(--paper-line);font:600 34px/1.2 Inter;color:var(--d1)}
+.steps li::before{content:counter(s,decimal-leading-zero);font:800 24px/1 var(--mono);color:var(--f3)}
+.steps li small{display:block;font:400 23px/1.35 Inter;color:var(--d3);margin-top:8px}
+.cta{position:absolute;left:1370px;bottom:96px;display:inline-flex;align-items:center;gap:14px;font:700 21px/1 var(--mono);padding:18px 22px;background:var(--d1);color:var(--paper);border-radius:12px;text-decoration:none}
 .cta i{width:12px;height:12px;border-radius:50%;background:var(--f1);box-shadow:0 0 0 5px rgba(255,176,0,.3)}
 
-/* ---------- 5 · evidence ---------- */
-.ev-chart{position:absolute;left:72px;width:1000px;top:250px;bottom:110px}
-.ev-side{position:absolute;left:1140px;right:72px;top:270px;bottom:110px;display:flex;flex-direction:column;gap:26px}
-.fig{font:800 72px/1 var(--display);color:var(--f1)}
-.fig + p{margin:6px 0 0;font-size:24px;color:var(--t2);line-height:1.35}
-.open{margin-top:auto;border:1px dashed var(--line);border-radius:14px;padding:22px 24px;font-size:22px;color:var(--t2);line-height:1.4}
-.open b{display:block;font:700 18px/1 var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-.open .vrow{display:block}.open .vrow + .vrow{margin-top:12px}
-.open em{font:800 34px/1 var(--display);font-style:normal;color:var(--f1);margin-right:8px}
+/* ---------- 4 · evidence ---------- */
+.ev-chart{position:absolute;left:72px;width:960px;top:330px;bottom:100px}
+.flow{position:absolute;left:1110px;right:72px;top:330px;display:flex;align-items:center;gap:14px;font:700 24px/1.2 var(--mono)}
+.flow span{flex:1;text-align:center;padding:18px 10px;border:2px solid var(--line);border-radius:12px;color:var(--t1)}
+.flow span.k{border-color:var(--f2);color:var(--f1)}
+.flow b{color:var(--t3);font-size:30px}
+.stats{position:absolute;left:1110px;right:72px;top:480px;display:grid;grid-template-columns:1fr 1fr;gap:40px 40px}
+.fig{font:900 112px/1 var(--display);color:var(--f1)}
+.fig + p{margin:10px 0 0;font-size:24px;color:var(--t2);line-height:1.35}
 
-/* ---------- 6 · why it matters ---------- */
-.law{position:absolute;left:72px;top:250px;width:720px;font-size:30px;line-height:1.45;color:var(--d2)}
-.law b{color:var(--d1)}
-.law .ref{display:block;margin-top:22px;font:500 19px/1.4 var(--mono);color:var(--d3)}
-.baselines{position:absolute;left:880px;right:72px;top:250px;bottom:110px}
+/* ---------- 5 · features (screens) ---------- */
+.tiles{position:absolute;left:72px;right:72px;top:300px;bottom:100px;display:grid;grid-template-columns:repeat(3,1fr);gap:36px}
+.tile{display:flex;flex-direction:column;min-height:0}
+.tile .frame{position:relative;flex:1;min-height:0}
+.tile .frame img,.tile .frame video{animation:kb 16s ease-in-out infinite alternate}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
+.tile h3{margin:22px 0 0;font:800 40px/1 var(--display);text-transform:uppercase;color:var(--d1)}
+.tile p{margin:8px 0 0;font-size:23px;line-height:1.35;color:var(--d3)}
+.tile p b{color:var(--f3)}
+
+/* ---------- 6 · impact ---------- */
+.who{position:absolute;left:72px;top:330px;width:820px;margin:0;padding:0;list-style:none}
+.who li{padding:24px 0;border-top:2px solid var(--line)}
+.who b{display:block;font:800 42px/1 var(--display);text-transform:uppercase;color:var(--t1)}
+.who span{display:block;margin-top:8px;font-size:24px;color:var(--t2)}
+.who .law{font:500 18px/1.3 var(--mono);color:var(--f1);margin-top:8px;display:block}
+.baselines{position:absolute;left:960px;right:72px;top:330px;bottom:100px}
 
 /* ---------- 7 · next ---------- */
-.cols{position:absolute;left:72px;right:72px;top:270px;bottom:110px;display:grid;grid-template-columns:1fr 1fr;gap:72px}
-.done,.todo-list{margin:0;padding:0;list-style:none;font-size:27px;line-height:1.4;color:var(--t2)}
+.cols{position:absolute;left:72px;right:72px;top:290px;bottom:100px;display:grid;grid-template-columns:1.1fr 1fr;gap:80px}
+.h3{font:700 20px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin:0 0 14px}
+.done,.todo-list{margin:0;padding:0;list-style:none;font-size:30px;line-height:1.35;color:var(--t2)}
 .done li,.todo-list li{padding:14px 0;border-top:1px solid var(--line)}
 .done li::before{content:"✓";color:var(--f1);font-weight:700;margin-right:16px}
-.todo-list li::before{content:"○";color:var(--t3);margin-right:16px}
+.todo-list li::before{content:"→";color:var(--f2);margin-right:16px}
 .done b,.todo-list b{color:var(--t1);font-weight:600}
-.h3{font:700 20px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin:0 0 14px}
-.team{font-size:27px;line-height:1.6;color:var(--t1);margin-bottom:30px}
-.links{display:flex;flex-direction:column;gap:8px;font:600 23px/1.4 var(--mono)}
-.links a{color:var(--f1);text-decoration:none}
-.si{font:500 17px/1.45 var(--mono);color:var(--t3);margin-top:26px}
+.team{font-size:30px;line-height:1.55;color:var(--t1);margin-bottom:34px}
 .qr-row{display:flex;align-items:center;gap:28px}
-.qr{display:block;background:#fff;padding:10px;border-radius:12px;width:200px;height:200px;flex:none}
-.qr-row .links{gap:12px}
-.qr-cap{font:600 18px/1.3 var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
-.qr-title{position:absolute;left:850px;bottom:96px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px}
-.qr-title .qr{width:160px;height:160px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
-.qr-title .qr-cap{color:var(--t2)}
+.links{display:flex;flex-direction:column;gap:12px;font:600 23px/1.4 var(--mono)}
+.links a{color:var(--f1);text-decoration:none}
+.si{font:500 16px/1.45 var(--mono);color:var(--t3);margin-top:30px}
 #ember-end{position:absolute;right:90px;bottom:90px;width:120px;z-index:2}
 
 /* ---------- reveal ---------- */
 .slide.on .rv{animation:rv .6s cubic-bezier(.2,.8,.2,1) both}
-.slide.on .rv.d1{animation-delay:.1s}.slide.on .rv.d2{animation-delay:.2s}.slide.on .rv.d3{animation-delay:.3s}
-@keyframes rv{from{opacity:0;transform:translateY(14px)}}
+.slide.on .rv.d1{animation-delay:.12s}.slide.on .rv.d2{animation-delay:.24s}.slide.on .rv.d3{animation-delay:.36s}
+@keyframes rv{from{opacity:0;transform:translateY(16px)}}
 .slide.on .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.6s .3s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
+.slide.on .grow{transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}}
 
 /* ---------- controls ---------- */
 .hud{position:fixed;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.06);z-index:10}
@@ -152,6 +157,7 @@ body:hover .nav{opacity:1}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
+  .cal .c{opacity:1!important}
   .slide.on .draw{stroke-dasharray:none;stroke-dashoffset:0}
 }
 @page{size:1920px 1080px;margin:0}
@@ -160,14 +166,18 @@ body:hover .nav{opacity:1}
   .stage{position:static}
   .deck{position:static;transform:none!important;width:1920px;height:auto}
   .slide{position:relative;width:1920px;height:1080px;opacity:1;visibility:visible;break-after:page}
-  .slide .rv{animation:none!important}.slide .draw{stroke-dasharray:none;stroke-dashoffset:0;animation:none!important}
-  .hud,.nav{display:none}
+  .slide *{animation:none!important}
+  .cal .c{opacity:1!important}
+  .draw{stroke-dasharray:none!important;stroke-dashoffset:0!important}
+  .hud,.nav,.live{display:none}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 html.print,html.print body{overflow:auto;height:auto}
 html.print .stage{position:static}
 html.print .deck{position:static;transform:none!important;height:auto}
 html.print .slide{position:relative;opacity:1;visibility:visible;margin-bottom:24px}
+html.print .slide *{animation:none!important}
+html.print .draw{stroke-dasharray:none!important;stroke-dashoffset:0!important}
 html.print .hud,html.print .nav{display:none}
 </style>
 </head>
@@ -184,7 +194,7 @@ html.print .hud,html.print .nav{display:none}
   <div class="copy">
     <div class="eyebrow rv">NASA Space Apps Challenge 2026</div>
     <h1 class="rv d1"><img class="wordmark" src="brand/ember-atlas.svg" alt="Ember Atlas"></h1>
-    <p class="sub rv d2">A burning calendar for any area in Mexico or the United States, from 2001 to this week, built from MODIS and VIIRS together.</p>
+    <p class="sub rv d2">One burning calendar from <b>25 years</b> of MODIS and VIIRS, for <b>any area</b> in Mexico and the US.</p>
     <div class="chip rv d3">Harmonization of MODIS and VIIRS Hot Spots</div>
   </div>
   <div class="byline rv d3">
@@ -202,87 +212,95 @@ html.print .hud,html.print .nav{display:none}
   <div class="heatline"></div>
   <div class="corner"><img class="logo" src="brand/ember-atlas-light.svg" alt="Ember Atlas"></div>
   <div class="top rv">
-    <p class="num">01</p>
-    <h2>VIIRS counts 4.3 times more hotspots than MODIS</h2>
+    <p class="num">01 · The problem</p>
+    <h2>Same fires, <em>4.3×</em> the hotspots</h2>
+    <p class="kick">Join MODIS and VIIRS end to end and fire seems to <b>explode in 2012</b>. It didn't: a sharper satellite arrived.</p>
   </div>
-  <p class="note rv d1">Same country, same fires (Mexico, 2019 to 2024). Put the two records end to end and fire activity seems to jump in 2012, the year VIIRS started.</p>
-  <svg class="chart rv d2" id="chart-problem" viewBox="0 0 1776 640" aria-label="Yearly hotspots in Mexico, MODIS versus VIIRS"></svg>
-  <div class="foot"><span>NASA FIRMS standard processing, yearly totals for Mexico. MODIS = Terra + Aqua, VIIRS = Suomi NPP.</span><span>2/7</span></div>
+  <svg class="chart rv d1" id="chart-problem" viewBox="0 0 1776 640" aria-label="Yearly hotspots in Mexico, MODIS versus VIIRS"></svg>
+  <div class="foot"><span>NASA FIRMS standard processing, yearly hotspots in Mexico. MODIS = Terra + Aqua, VIIRS = Suomi NPP.</span><span>2/7</span></div>
 </section>
 
-<!-- 3 · NASA DATA -->
-<section class="slide" aria-label="NASA data">
-  <div class="heatline"></div>
-  <div class="corner"><img class="logo" src="brand/ember-atlas.svg" alt="Ember Atlas"></div>
-  <div class="top rv">
-    <p class="num">02</p>
-    <h2>2024, as each sensor saw it</h2>
-  </div>
-  <div class="maps rv d1">
-    <div class="map"><canvas id="map-modis" width="960" height="570"></canvas><div class="cap"><div class="lbl">MODIS<small>Terra + Aqua, 1 km pixels</small></div><div class="n" id="n-modis"></div></div></div>
-    <div class="map"><canvas id="map-viirs" width="960" height="570"></canvas><div class="cap"><div class="lbl">VIIRS<small>NOAA-20, 375 m pixels</small></div><div class="n" id="n-viirs"></div></div></div>
-  </div>
-  <p class="sattable rv d2"><b>Terra, Aqua</b> MODIS since 2000 and 2002 &nbsp;/&nbsp; <b>Suomi NPP</b> VIIRS 2012 to Nov 2026 &nbsp;/&nbsp; <b>NOAA-20, NOAA-21</b> VIIRS since 2018 and 2023, our reference scale</p>
-  <div class="foot"><span>All hotspots: NASA FIRMS archive plus the daily near-real-time feed, loaded by our n8n pipelines into PostGIS. Map: 0.1° cells, Mexico and neighbours.</span><span>3/7</span></div>
-</section>
-
-<!-- 4 · DEMO -->
-<section class="slide light" aria-label="The app">
+<!-- 3 · THE APP (live footage) -->
+<section class="slide light s-app" aria-label="The app">
   <div class="heatline"></div>
   <div class="corner"><img class="logo" src="brand/ember-atlas-light.svg" alt="Ember Atlas"></div>
   <div class="top rv">
-    <p class="num">03</p>
-    <h2>Pick an area, read its calendar</h2>
+    <p class="num">02 · Our solution</p>
+    <h2>Pick an area. <em>Read 25 years.</em></h2>
   </div>
   <div class="frame rv d1">
     <div class="bar"><i></i><i></i><i></i><span>emberatlas.ink</span></div>
-    <div class="ph">emberatlas.ink</div>
-    <div class="view"><iframe id="live" title="EmberAtlas live demo" data-src="/" loading="lazy" tabindex="-1"></iframe></div>
+    <video class="clip" src="deck/play.mp4" poster="deck/play-poster.jpg" muted loop playsinline preload="auto"></video>
+    <div class="live"><i></i>REAL APP</div>
   </div>
-  <div class="side rv d2">
-    <ol>
-      <li><b>Choose a municipality</b> or draw your own polygon on the map.</li>
-      <li>See every month since 2001 on the VIIRS scale, with its normal range.</li>
-      <li>Months well above normal are flagged, so a bad season stands out at a glance.</li>
-      <li><b>Next 72 hours:</b> the chance of fire in the area, from our model (AUC 0.91 on all of 2025).</li>
-      <li>Download the hotspots as CSV, or ask Ember what a number means.</li>
-    </ol>
-    <a class="cta" href="/" target="_blank" rel="noopener"><i></i>emberatlas.ink</a>
-  </div>
-  <div class="foot"><span>Live site, updated daily from FIRMS</span><span>4/7</span></div>
+  <ol class="steps rv d2">
+    <li><span>Choose a municipality, draw or drop a pin<small>Any polygon, Mexico and the US</small></span></li>
+    <li><span>Every month since 2001, one scale<small>Compared with its normal range</small></span></li>
+    <li><span>Unusual months stand out<small>From “much below” to “record high”</small></span></li>
+  </ol>
+  <a class="cta rv d3" href="/" target="_blank" rel="noopener"><i></i>emberatlas.ink · updated daily</a>
+  <div class="foot"><span>Screen recording of the live site: the timeline playing Ocosingo, Chiapas from 2001.</span><span>3/7</span></div>
 </section>
 
-<!-- 5 · EVIDENCE -->
+<!-- 4 · EVIDENCE -->
 <section class="slide" aria-label="Evidence">
   <div class="heatline"></div>
   <div class="corner"><img class="logo" src="brand/ember-atlas.svg" alt="Ember Atlas"></div>
   <div class="top rv">
-    <p class="num">04</p>
-    <h2>Both sensors agree on timing</h2>
+    <p class="num">03 · How and how well</p>
+    <h2>One factor <em>per month</em>, tested</h2>
   </div>
-  <svg class="ev-chart rv d1" id="chart-ratio" viewBox="0 0 1000 720" aria-label="VIIRS to MODIS ratio by calendar month"></svg>
-  <div class="ev-side rv d2">
-    <div><div class="fig">r = 0.995</div><p>between the monthly MODIS and VIIRS series in Mexico. Both sensors see the same fire seasons.</p></div>
-    <div><div class="fig">3.2× to 5.9×</div><p>range of the ratio across individual months, so we use one factor per calendar month instead of a single one.</p></div>
-    <div class="open"><b>Validated</b><span class="vrow"><em>5%</em> typical error on the yearly total for Mexico when each year is left out of the calibration (worst year: 11.6%)</span><span class="vrow"><em>r = 0.83</em> monthly, against 77,420 fires reported by CONAFOR, 2015 to 2025</span></div>
+  <svg class="ev-chart rv d1" id="chart-ratio" viewBox="0 0 960 680" aria-label="VIIRS to MODIS ratio by calendar month"></svg>
+  <div class="flow rv d2"><span>Aqua MODIS</span><b>×</b><span class="k">k(month)</span><b>=</b><span>VIIRS scale</span></div>
+  <div class="stats rv d3">
+    <div><div class="fig">5%</div><p>typical error on the yearly total, each year left out (worst 11.6%)</p></div>
+    <div><div class="fig">0.83</div><p>monthly correlation with 77,420 fires reported by CONAFOR</p></div>
+    <div><div class="fig">0.995</div><p>MODIS and VIIRS see the same seasons (monthly r)</p></div>
+    <div><div class="fig">0.91</div><p>AUC of our 72 h forecast on all of 2025</p></div>
   </div>
-  <div class="foot"><span>Bars: NOAA-20 hotspots divided by Terra + Aqua hotspots, Mexico, 2019 to 2024. Darker = more fires that month. Method and validation: docs/research/14.</span><span>5/7</span></div>
+  <div class="foot"><span>Bars: NOAA-20 ÷ Terra + Aqua hotspots, Mexico 2019–2024; darker = more fire that month. Method: docs/research/14.</span><span>4/7</span></div>
 </section>
 
-<!-- 6 · WHY IT MATTERS -->
-<section class="slide light" aria-label="Why it matters">
+<!-- 5 · FEATURES (screens) -->
+<section class="slide light" aria-label="What you get">
   <div class="heatline"></div>
   <div class="corner"><img class="logo" src="brand/ember-atlas-light.svg" alt="Ember Atlas"></div>
   <div class="top rv">
-    <p class="num">05</p>
-    <h2>Municipalities must set burn dates</h2>
+    <p class="num">04 · In the app</p>
+    <h2>History, <em>next 72 h</em>, plain answers</h2>
   </div>
-  <div class="law rv d1">
-    Mexican law asks each municipal government to set the dates when agricultural and forest burns are allowed, every year. <b>No public tool shows them 25 years of fire history for their own territory.</b> Civil protection, CONAFOR crews and land managers face the same gap when they ask whether this month is normal.
-    <span class="ref">NOM-015-SEMARNAT-AGRICULTURA-2023, section 5</span>
+  <div class="tiles">
+    <div class="tile rv d1">
+      <div class="frame"><div class="bar"><i></i><i></i><i></i></div><img src="deck/season.jpg" alt="Burning calendar heatmap, month by year" style="object-position:0 40%"></div>
+      <h3>Burning calendar</h3><p>Month × year since 2001: the fire season at a glance.</p>
+    </div>
+    <div class="tile rv d2">
+      <div class="frame"><div class="bar"><i></i><i></i><i></i></div><img src="deck/forecast.jpg" alt="72 hour forecast cells on the map" style="object-position:62% 30%"></div>
+      <h3>72 h forecast</h3><p>Chance of fire in the area, <b>AUC 0.91</b> on 2025.</p>
+    </div>
+    <div class="tile rv d3">
+      <div class="frame"><div class="bar"><i></i><i></i><i></i></div><video class="clip" src="deck/ember.mp4" poster="deck/ember-poster.jpg" muted loop playsinline preload="auto" style="object-position:100% 0"></video></div>
+      <h3>Ask Ember</h3><p>Explains the numbers on screen. Plus CSV, PNG and a one-page report.</p>
+    </div>
   </div>
-  <svg class="baselines rv d2" id="chart-baselines" viewBox="0 0 970 640" aria-label="Where each fire monitoring tool's history begins"></svg>
-  <div class="foot"><span>Tools reviewed in docs/research/09. Most start their comparisons in 2012 or later because they use a single sensor.</span><span>6/7</span></div>
+  <div class="foot"><span>Real screens from emberatlas.ink, Ocosingo, Chiapas, captured Nov 15, 2026.</span><span>5/7</span></div>
+</section>
+
+<!-- 6 · IMPACT -->
+<section class="slide" aria-label="Impact">
+  <div class="heatline"></div>
+  <div class="corner"><img class="logo" src="brand/ember-atlas.svg" alt="Ember Atlas"></div>
+  <div class="top rv">
+    <p class="num">05 · Who it helps</p>
+    <h2>Is this month <em>normal</em>?</h2>
+  </div>
+  <ul class="who rv d1">
+    <li><b>Municipalities</b><span>Set the yearly burn dates with their own fire history</span><span class="law">Required by NOM-015-SEMARNAT-AGRICULTURA-2023</span></li>
+    <li><b>Civil protection & CONAFOR</b><span>See a bad season coming and plan crews</span></li>
+    <li><b>Land managers & researchers</b><span>A 25-year series with no sensor jump</span></li>
+  </ul>
+  <svg class="baselines rv d2" id="chart-baselines" viewBox="0 0 890 640" aria-label="Where each fire monitoring tool's history begins"></svg>
+  <div class="foot"><span>Right: where each tool's comparable history starts. Most begin in 2012 because they use one sensor (docs/research/09).</span><span>6/7</span></div>
 </section>
 
 <!-- 7 · NEXT + TEAM -->
@@ -290,24 +308,22 @@ html.print .hud,html.print .nav{display:none}
   <div class="heatline"></div>
   <div class="corner"><img class="logo" src="brand/ember-atlas.svg" alt="Ember Atlas"></div>
   <div class="top rv">
-    <p class="num">06</p>
-    <h2>Where we are</h2>
+    <p class="num">06 · Next</p>
+    <h2>Live today, <em>growing</em> tomorrow</h2>
   </div>
   <div class="cols">
     <div class="rv d1">
-      <p class="h3">Working today</p>
+      <p class="h3">Working now</p>
       <ul class="done">
-        <li><b>emberatlas.ink</b> online, data refreshed every day</li>
-        <li>MODIS mapped to the VIIRS scale with <b>one factor per calendar month</b>, any polygon, with an uncertainty band</li>
-        <li>Gas flares and volcanoes removed from the recent months</li>
-        <li><b>72 h fire forecast</b> for the area, from our FireCast model</li>
-        <li>CSV export and the Ember assistant</li>
+        <li><b>emberatlas.ink</b>, refreshed daily from FIRMS</li>
+        <li>Harmonized calendar with an uncertainty band</li>
+        <li>72 h forecast, exports and Ember</li>
       </ul>
       <p class="h3" style="margin-top:34px">Next</p>
       <ul class="todo-list">
-        <li>An alert when the current month leaves its normal range</li>
-        <li>Show how past forecasts turned out, next to each forecast</li>
-        <li>Regional factors per area (designed and tested, not in the app yet) and more countries</li>
+        <li><b>Alerts</b> when a month leaves its normal range</li>
+        <li>Regional factors and <b>more countries</b></li>
+        <li>Pilot with a municipality</li>
       </ul>
     </div>
     <div class="rv d2">
@@ -321,7 +337,7 @@ html.print .hud,html.print .nav{display:none}
           <a href="https://github.com/leonardos4enz/a11-nasa-2026" target="_blank" rel="noopener">github.com/leonardos4enz/<br>a11-nasa-2026</a>
         </div>
       </div>
-      <p class="si">Data: NASA FIRMS (MODIS, VIIRS), CONAFOR and NIFC. We used AI tools for parts of the code, data processing and text, and the Ember assistant runs on an LLM; the team reviewed all of it (details in the README).</p>
+      <p class="si">Data: NASA FIRMS (MODIS, VIIRS), CONAFOR, NIFC. AI tools helped with code, data and text, and Ember runs on an LLM; the team reviewed all of it (README).</p>
     </div>
   </div>
   <div id="ember-end" aria-hidden="true"></div>
@@ -352,7 +368,6 @@ html.print .hud,html.print .nav{display:none}
   const NS='http://www.w3.org/2000/svg';
   const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
   const txt=(s,a,p)=>{const e=el('text',a,p);e.textContent=s;return e};
-  const fmt=n=>n.toLocaleString('en-US');
 
   // ---- slide 2: yearly totals ----
   (function(){
@@ -363,63 +378,48 @@ html.print .hud,html.print .nav{display:none}
     YEARS.forEach((yr,i)=>{if(yr%2===1)txt(yr,{x:x(i),y:H-14,'text-anchor':'middle','font-size':21,fill:'#7A746C'},svg)});
     const path=(arr,c,w)=>{let d='',len=0,px,py;arr.forEach((v,i)=>{if(v==null)return;const X=x(i),Y=y(v);d+=(d?'L':'M')+X.toFixed(1)+','+Y.toFixed(1);if(px!=null)len+=Math.hypot(X-px,Y-py);px=X;py=Y});
       const p=el('path',{d,fill:'none',stroke:c,'stroke-width':w,'stroke-linejoin':'round','stroke-linecap':'round',class:'draw'},svg);p.style.setProperty('--len',Math.ceil(len))};
-    path(MODIS,'#7A746C',4);path(VIIRS,'#E8590C',5);
+    path(MODIS,'#7A746C',4);path(VIIRS,'#E8590C',6);
     const last=YEARS.length-1;
-    txt('VIIRS',{x:x(last)-4,y:y(VIIRS[last])-22,'text-anchor':'end','font-size':26,'font-weight':700,fill:'#E8590C'},svg);
-    txt('MODIS',{x:x(last)-4,y:y(MODIS[last])-22,'text-anchor':'end','font-size':26,'font-weight':700,fill:'#4F4A44'},svg);
+    txt('VIIRS',{x:x(last)-4,y:y(VIIRS[last])-48,'text-anchor':'end','font-size':30,'font-weight':700,fill:'#E8590C'},svg);
+    txt('MODIS',{x:x(last)-4,y:y(MODIS[last])-22,'text-anchor':'end','font-size':30,'font-weight':700,fill:'#4F4A44'},svg);
     const i12=YEARS.indexOf(2012);
     el('line',{x1:x(i12),x2:x(i12),y1:T,y2:H-B,stroke:'#1A1714','stroke-width':2,'stroke-dasharray':'6 6'},svg);
-    txt('2012: VIIRS starts',{x:x(i12)-14,y:T+24,'text-anchor':'end','font-size':23,'font-weight':600,fill:'#1A1714'},svg);
+    txt('2012: VIIRS starts',{x:x(i12)-14,y:T+24,'text-anchor':'end','font-size':24,'font-weight':600,fill:'#1A1714'},svg);
   })();
 
-  // ---- slide 5: ratio by month ----
+  // ---- slide 4: ratio by month ----
   (function(){
-    const svg=document.getElementById('chart-ratio'),W=1000,H=720,L=64,R=10,T=50,B=56,max=6;
+    const svg=document.getElementById('chart-ratio'),W=960,H=680,L=64,R=10,T=50,B=56,max=6;
     const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],bw=(W-L-R)/12,y=v=>T+(1-v/max)*(H-T-B),wmax=Math.max(...WEIGHT);
     for(let v=0;v<=max;v+=1){el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:v%2?'#211F1D':'#34302C','stroke-width':1.5},svg);
       if(v%2===0)txt(v+'×',{x:L-12,y:y(v)+7,'text-anchor':'end','font-size':20,fill:'#8F8880'},svg)}
-    txt('VIIRS hotspots per MODIS hotspot',{x:L,y:T-24,'font-size':22,'font-weight':600,fill:'#C9C4BD'},svg);
+    txt('VIIRS hotspots per MODIS hotspot, by month',{x:L,y:T-24,'font-size':22,'font-weight':600,fill:'#C9C4BD'},svg);
     RATIO.forEach((r,i)=>{
       const op=.3+.7*Math.sqrt(WEIGHT[i]/wmax),X=L+i*bw+bw*.18,bwid=bw*.64;
-      el('rect',{x:X,y:y(r),width:bwid,height:y(0)-y(r),rx:4,fill:'#F77F00',opacity:op.toFixed(2)},svg);
+      const b=el('rect',{x:X,y:y(r),width:bwid,height:y(0)-y(r),rx:4,fill:'#F77F00',opacity:op.toFixed(2),class:'grow'},svg);
+      b.style.animationDelay=(300+i*60)+'ms';
       txt(r.toFixed(1),{x:X+bwid/2,y:y(r)-10,'text-anchor':'middle','font-size':19,fill:'#C9C4BD'},svg);
       txt(M[i],{x:X+bwid/2,y:H-18,'text-anchor':'middle','font-size':19,fill:'#8F8880'},svg)});
   })();
 
-  // ---- slide 6: where each tool's history starts ----
+  // ---- slide 6: where each tool's history starts (dark) ----
   (function(){
-    const svg=document.getElementById('chart-baselines'),W=970,H=640,L=330,R=20,T=40,y0=1998,y1=2026;
+    const svg=document.getElementById('chart-baselines'),W=890,H=640,L=300,R=20,T=40,y0=1998,y1=2026;
     const rows=[
       ['INPE Queimadas (Brazil)',1998,'one reference satellite'],
       ['GWIS / EFFIS',2012,'VIIRS era'],
       ['Global Forest Watch',2012,'VIIRS only'],
       ['Argentina SNMF',2015,'Suomi NPP baseline'],
-      ['EmberAtlas',2001,'MODIS + VIIRS, harmonized']];
+      ['Ember Atlas',2001,'MODIS + VIIRS, harmonized']];
     const x=v=>L+(v-y0)/(y1-y0)*(W-L-R),rh=(H-T-60)/rows.length;
-    [2000,2005,2010,2015,2020,2025].forEach(v=>{el('line',{x1:x(v),x2:x(v),y1:T,y2:H-50,stroke:'#E9E7E4','stroke-width':1.5},svg);
-      txt(v,{x:x(v),y:H-18,'text-anchor':'middle','font-size':20,fill:'#7A746C'},svg)});
+    [2000,2005,2010,2015,2020,2025].forEach(v=>{el('line',{x1:x(v),x2:x(v),y1:T,y2:H-50,stroke:'#211F1D','stroke-width':1.5},svg);
+      txt(v,{x:x(v),y:H-18,'text-anchor':'middle','font-size':20,fill:'#8F8880'},svg)});
     rows.forEach((r,i)=>{const cy=T+rh*i+rh/2,ours=i===rows.length-1;
-      txt(r[0],{x:L-20,y:cy-2,'text-anchor':'end','font-size':24,'font-weight':ours?700:500,fill:ours?'#E8590C':'#1A1714'},svg);
-      txt(r[2],{x:L-20,y:cy+24,'text-anchor':'end','font-size':18,fill:'#7A746C'},svg);
-      el('rect',{x:x(r[1]),y:cy-14,width:x(y1)-x(r[1]),height:28,rx:4,fill:ours?'#E8590C':'#D9D5D0'},svg);
-      txt(r[1],{x:x(r[1])+10,y:cy+7,'font-size':18,'font-weight':600,fill:ours?'#fff':'#4F4A44'},svg)});
+      txt(r[0],{x:L-20,y:cy-2,'text-anchor':'end','font-size':24,'font-weight':ours?700:500,fill:ours?'#FFB000':'#F5F3F0'},svg);
+      txt(r[2],{x:L-20,y:cy+24,'text-anchor':'end','font-size':18,fill:'#8F8880'},svg);
+      const b=el('rect',{x:x(r[1]),y:cy-14,width:x(y1)-x(r[1]),height:28,rx:4,fill:ours?'#F77F00':'#34302C'},svg);
+      txt(r[1],{x:x(r[1])+10,y:cy+7,'font-size':18,'font-weight':600,fill:ours?'#0E0D0C':'#C9C4BD'},svg)});
   })();
-
-  // ---- real 2024 hotspot grids (data/deck/mexico_2024_grid.json, NASA FIRMS) ----
-  function drawGrid(cv,cells,w,h,opt){
-    const c=cv.getContext('2d'),sx=cv.width/w,sy=cv.height/h;
-    c.fillStyle=opt.bg;c.fillRect(0,0,cv.width,cv.height);
-    const ramp=['#5C1F0E','#9A2A0A','#D9480F','#F77F00','#FCBF49','#FFF1C2'];
-    for(const [i,n] of cells){const gx=i%w,gy=(i/w)|0;
-      const k=Math.min(ramp.length-1,Math.floor(Math.log2(n+1)/1.4));
-      c.fillStyle=ramp[k];c.fillRect(gx*sx+opt.ox,gy*sy+opt.oy,Math.ceil(sx),Math.ceil(sy))}
-  }
-  fetch('data/deck/mexico_2024_grid.json').then(r=>r.json()).then(g=>{
-    drawGrid(document.getElementById('map-modis'),g.modis,g.w,g.h,{bg:'#0A0807',ox:0,oy:0});
-    drawGrid(document.getElementById('map-viirs'),g.viirs,g.w,g.h,{bg:'#0A0807',ox:0,oy:0});
-    document.getElementById('n-modis').innerHTML=fmt(g.modis_total)+'<small>hotspots</small>';
-    document.getElementById('n-viirs').innerHTML=fmt(g.viirs_total)+'<small>hotspots</small>';
-  }).catch(()=>{});
 
   // ---- cover: burning calendar, Mexico, Terra MODIS hotspots per month 2001-2025 (one sensor, so years compare) ----
   (function(){
@@ -447,19 +447,24 @@ html.print .hud,html.print .nav{display:none}
 
   // ---- deck engine ----
   const deck=document.getElementById('deck'),slides=[...deck.querySelectorAll('.slide')],N=slides.length;
-  if(new URLSearchParams(location.search).has('print'))document.documentElement.classList.add('print');
-  function fit(){if(document.documentElement.classList.contains('print'))return;
+  const print=new URLSearchParams(location.search).has('print');
+  if(print)document.documentElement.classList.add('print');
+  function fit(){if(print)return;
     const s=Math.min(innerWidth/1920,innerHeight/1080);deck.style.transform=`translate(-50%,-50%) scale(${s})`}
   addEventListener('resize',fit);fit();
   let cur=0;
+  function clips(n){
+    slides.forEach((s,i)=>s.querySelectorAll('video.clip').forEach(v=>{
+      if(i===n&&!print){try{v.currentTime=0}catch(e){}const p=v.play();p&&p.catch(()=>{})}else v.pause();
+    }));
+  }
   function go(n){
     n=Math.max(0,Math.min(N-1,n));
     slides[cur].classList.remove('on');void slides[n].offsetWidth;slides[n].classList.add('on');cur=n;
     document.getElementById('prog').style.width=((n+1)/N*100)+'%';
     document.getElementById('count').textContent=(n+1)+'/'+N;
     try{history.replaceState(null,'','#'+(n+1))}catch(e){}
-    const f=document.getElementById('live');
-    if(slides[n].contains(f)&&!f.src&&location.protocol!=='file:')f.src=f.dataset.src;
+    clips(n);
     if(n===N-1&&endE&&endE.flare)try{endE.flare()}catch(e){}
   }
   const start=parseInt(location.hash.slice(1),10);

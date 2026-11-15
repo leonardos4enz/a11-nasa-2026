@@ -50,20 +50,19 @@
 .ember-msg.err { align-self: stretch; padding: 10px 12px; border-radius: 8px; color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); display: flex; gap: 10px; align-items: center; }
 .ember-msg.err span { flex: 1; }
 .ember-msg.err button { border: 1px solid currentColor; background: none; color: inherit; border-radius: 6px; height: 28px; padding: 0 10px; cursor: pointer; font-weight: 500; }
-/* Sub-agent card: the Researcher, a small blue Ember that searches the docs for Ember */
-.ember-msg.agent { --ag: #4C8DFF; align-self: stretch; display: flex; gap: 10px; align-items: flex-start; white-space: normal; padding: 8px 10px 9px 8px; border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--ag) 35%, var(--border)); background: color-mix(in srgb, var(--ag) 7%, var(--surface)); line-height: 18px; }
-.ember-msg.agent .ag-pet { flex: none; width: 34px; margin-top: -1px; }
-.ember-msg.agent .ag-body { min-width: 0; flex: 1; font-size: 12.5px; }
-.ember-msg.agent .ag-head { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
-.ember-msg.agent .ag-head b { font-weight: 600; color: var(--ag); font-size: 13px; }
-.ember-msg.agent .ag-head span { color: var(--text-3); }
-.ember-msg.agent .ag-q { color: var(--text-2); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ember-msg.agent .ag-found { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
-.ember-msg.agent .ag-found li { max-width: 100%; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ag) 14%, var(--surface)); color: var(--text-2); font-size: 11.5px; line-height: 18px; }
-.ember-msg.agent .ag-found li span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ember-msg.agent .ag-none { color: var(--text-3); margin-top: 3px; font-style: italic; }
-.ember-msg.agent.fail { --ag: var(--warn); }
+/* Sub-agent line: "Invoked Researcher" with a mini blue Ember; reuses the page-action stack look (agent.css) */
+.ember-msg.acts.agent { --ag: #4C8DFF; }
+.ember-msg.acts.agent .acts-head { padding: 4px 10px 4px 6px; border-color: color-mix(in srgb, var(--ag) 35%, var(--border));
+  background: color-mix(in srgb, var(--ag) 8%, var(--surface-2)); }
+.ember-msg.acts.agent .ag-pet { flex: none; width: 20px; height: 20px; margin: -2px 0 -1px; }
+.ember-msg.acts.agent .acts-head b { color: var(--ag); font-weight: 600; }
+.ember-msg.acts.agent .acts-head q { color: var(--text-3); }
+.ember-msg.acts.agent .acts-list { border-color: color-mix(in srgb, var(--ag) 35%, var(--border)); }
+.ember-msg.acts.agent .acts-list b { font-weight: 600; color: var(--text); }
+.ember-msg.acts.agent .ag-ask span { color: var(--text-3); font-style: italic; }
+.ember-msg.acts.agent .ag-doc i { background: var(--ag); border-radius: 2px; width: 7px; height: 9px; }
+.ember-msg.acts.agent .ag-doc.skip i { background: var(--text-3); }
+.ember-msg.acts.agent.fail { --ag: var(--warn); }
 
 .ember-typing { display: inline-flex; gap: 4px; padding: 6px 0; }
 .ember-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: ember-dot 1.2s infinite ease-in-out; }

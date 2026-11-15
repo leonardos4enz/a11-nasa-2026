@@ -135,20 +135,35 @@
   // ---- Sub-agent cards: the Researcher (blue Ember) searches the project documents for Ember ----
   const AGENTS = { researcher: { name: "Researcher", color: "blue" } };
   let minis = []; // mini Embers alive in the log, destroyed on every render
-  function agentCard(m) {
+  // One compact line ("Invoked Researcher · 3 docs") with the docs stacked underneath; click to see the question and
+  // the sections it used. Same look as the page-action stack.
+  function agentCard(m, key) {
     const a = AGENTS[m.who] || { name: m.who, color: "blue" };
     const el = document.createElement("div");
     const found = m.found || [];
     const none = m.state !== "fail" && !found.length;
-    el.className = `ember-msg agent${m.state === "fail" ? " fail" : none ? " none" : ""}`;
+    const open = openStacks.has(key);
+    el.className = `ember-msg acts agent${found.length > 1 ? " multi" : ""}${found.length > 2 ? " many" : ""}${open ? " open" : ""}` +
+      `${m.state === "fail" ? " fail" : none ? " none" : ""}`;
+    const meta = m.state === "fail" ? "failed" : none ? "no docs" : `${found.length} doc${found.length > 1 ? "s" : ""}`;
     el.innerHTML =
-      `<div class="ag-pet" aria-hidden="true"></div>` +
-      `<div class="ag-body"><div class="ag-head"><b>${esc(a.name)}</b><span>${m.state === "fail" ? "could not search the docs" : "searched the docs"}</span></div>` +
-      (m.query ? `<div class="ag-q">“${esc(m.query)}”</div>` : "") +
+      `<button type="button" class="acts-head" aria-expanded="${open}"><span class="ag-pet" aria-hidden="true"></span>` +
+      `<span>Invoked <b>${esc(a.name)}</b>${m.query ? ` · <q>${esc(m.query)}</q>` : ""}</span><small>${meta}</small>` +
+      `<svg class="i chev" aria-hidden="true"><use href="#i-down"/></svg></button>` +
+      `<ol class="acts-list"${open ? "" : " hidden"}>` +
+      (m.query ? `<li class="ag-ask"><span>Asked: “${esc(m.query)}”</span></li>` : "") +
       (found.length
-        ? `<ul class="ag-found">${found.map((f) => `<li title="${esc(f.document)}"><span>${esc(f.section || f.document)}</span></li>`).join("")}</ul>`
-        : m.state === "fail" ? "" : `<div class="ag-none">Nothing relevant in the docs</div>`) +
-      `</div>`;
+        ? found.map((f) => `<li class="ag-doc" title="${esc(f.document)} — ${esc(f.section)}"><i></i><span><b>${esc(f.document)}</b> · ${esc(f.section)}</span></li>`).join("")
+        : `<li class="ag-doc skip"><i></i><span>${m.state === "fail" ? "The search failed" : "Nothing relevant in the docs"}</span></li>`) +
+      `</ol>`;
+    el.querySelector(".acts-head").onclick = (e) => {
+      const nowOpen = !openStacks.has(key);
+      nowOpen ? openStacks.add(key) : openStacks.delete(key);
+      el.classList.toggle("open", nowOpen);
+      el.querySelector(".acts-list").hidden = !nowOpen;
+      e.currentTarget.setAttribute("aria-expanded", String(nowOpen));
+      if (nowOpen) el.scrollIntoView({ block: "nearest" });
+    };
     if (window.Ember) {
       const pet = Ember.create(el.querySelector(".ag-pet"), { color: a.color });
       minis.push(pet);
@@ -182,7 +197,7 @@
         if (stacks.has(i)) log.appendChild(actionStack(i, stacks.get(i)));
         return;
       }
-      if (m.role === "agent") { log.appendChild(agentCard(m)); return; }
+      if (m.role === "agent") { log.appendChild(agentCard(m, "agent" + (m.t || i))); return; }
       const el = document.createElement("div");
       el.className = "ember-msg " + m.role;
       if (m.role === "bot") el.innerHTML = md(m.text);

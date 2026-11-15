@@ -1,6 +1,18 @@
-# 13 — Harmonization v2: regional calibration, validated
+# 13 — Harmonization v2: regional calibration (improved method, not implemented)
 
-Replaces the provisional `harmonize_polygon()` (one median ratio per area). Same signature and JSON contract, so
+> **Status: not used by the app.** The app uses the simple method of [doc 14](14-harmonization-simple.md): one
+> national factor k per calendar month (VIIRS ÷ Aqua, median 2012-2021). This regional version was applied on a11-db
+> on 2026-11-15 and then replaced to keep the method simple and easy to explain. It stays here as a **tested
+> improvement** for when small areas need more accuracy: it lowers the monthly error in areas whose fires differ from
+> the country average (Sierra de Arteaga 36.6 % → 25.8 %). The code still works: `analysis/harmonization/*.py`
+> generates `analysis/db/harmonization_v2.sql`. Applying that file would bring it back (and the NRT static filter is
+> the same in both).
+>
+> What it adds on top of the simple method: factors per 1° region and month with hierarchical shrinkage, a local
+> correction per polygon, S-NPP as an explicit bridge (S-NPP → NOAA-20 factor), Terra + Aqua as the MODIS reference,
+> calibration 2012-2023, and a 10-90 % range from leave-one-year-out errors by estimate size.
+
+Replaced the provisional `harmonize_polygon()` (one median ratio per area). Same signature and JSON contract, so
 `server.js` and the page do not change.
 
 - SQL to apply: [`analysis/db/harmonization_v2.sql`](../../analysis/db/harmonization_v2.sql) (generated, idempotent)

@@ -306,7 +306,7 @@ async function checkArea(geo) {
   return null;
 }
 
-// POST { area | polygon } -> { months: [{ month, modis, noaa20, snpp, noaa21 }] }: raw vegetation-fire detections per
+// POST { area | polygon } -> { months: [{ month, modis, aqua, noaa20, snpp, noaa21 }] }: raw vegetation-fire detections per
 // month and satellite family, before any harmonization. The page uses it to show and cross-validate the adjustment.
 async function handleHarmonizedRaw(req, res) {
   if (rateLimited(clientIp(req))) return sendJson(res, 429, { error: "Too many requests, slow down." });
@@ -322,10 +322,11 @@ async function handleHarmonizedRaw(req, res) {
     if (bad) return sendJson(res, 200, { error: bad });
     // Same filters as the harmonization (polygon_monthly_cells: nominal/high confidence, no static
     // sources), so raw and harmonized compare like with like. Falls back to the unfiltered counts if the
-    // v2 function is missing.
+    // function is missing.
     const rawQuery = (fn, n) => pool.query(
       `SELECT to_char(r.month, 'YYYY-MM') AS month,
               coalesce(sum(r.${n}) FILTER (WHERE r.satellite IN ('Terra', 'Aqua')), 0)::int AS modis,
+              coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'Aqua'), 0)::int AS aqua,
               coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'NOAA20'), 0)::int AS noaa20,
               coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'SNPP'), 0)::int AS snpp,
               coalesce(sum(r.${n}) FILTER (WHERE r.satellite = 'NOAA21'), 0)::int AS noaa21
@@ -354,7 +355,7 @@ async function handleHarmonizedRaw(req, res) {
 //           strongest, for the map. `types` picks FIRMS fire types (0 vegetation, 1 volcano, 2 static land source,
 //           3 offshore; NRT rows have no type and count as 0); default [0]. byType: { "<type>": count } before the cap.
 // NRT rows carry no fire_type: treat them as static land sources (2) when they fall on a known static site,
-// exactly as harmonize_polygon() does (is_static_site, analysis/db/harmonization_v2.sql), else as vegetation (0).
+// exactly as harmonize_polygon() does (is_static_site, analysis/db/harmonization.sql), else as vegetation (0).
 // Keeps the map dots and the CSV consistent with what the calendar counts.
 const FIRE_TYPE_SQL = "coalesce(h.fire_type, CASE WHEN is_static_site(h.latitude, h.longitude) THEN 2 ELSE 0 END)";
 const HOTSPOT_CSV_MAX = 200_000;

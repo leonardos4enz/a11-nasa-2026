@@ -23,7 +23,11 @@ would return (month counts, first/last month, yearly totals per area).
 `month, count, low, high, source`), set `'provisional'` to `false` in `harmonized_index_json()`, and re-run
 "A11 DB setup". The server and the page do not change.
 
-**v2 (validated) method:** apply `analysis/db/harmonization_v2.sql` after `schema.sql` — regional, seasonal
+**Method used by the app:** apply `analysis/db/harmonization.sql` after `schema.sql` — one factor k per calendar
+month (VIIRS ÷ Aqua, median 2012-2021), MODIS-era `low`/`high` = interquartile range of the yearly ratios, NRT
+static sources removed. See `docs/research/14-harmonization-simple.md`.
+
+**Regional v2 method (improved, not implemented):** `analysis/db/harmonization_v2.sql` — regional, seasonal
 calibration with S-NPP as a bridge and NRT static sources removed. See `docs/research/13-harmonization-v2.md`.
 
 **Provisional method (schema.sql alone):** NOAA-20 counts from its first full month (2018) on; earlier months are MODIS

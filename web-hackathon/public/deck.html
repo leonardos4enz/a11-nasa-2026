@@ -263,10 +263,10 @@ html.print .hud,html.print .nav{display:none}
   <svg class="ev-chart rv d1" id="chart-ratio" viewBox="0 0 1000 720" aria-label="VIIRS to MODIS ratio by calendar month"></svg>
   <div class="ev-side rv d2">
     <div><div class="fig">r = 0.995</div><p>between the monthly MODIS and VIIRS series in Mexico. Both sensors see the same fire seasons.</p></div>
-    <div><div class="fig">3.2× to 5.9×</div><p>range of the ratio across individual months, so we calibrate per area and per calendar month instead of using one factor.</p></div>
-    <div class="open"><b>Validated</b><span class="vrow"><em>3.6%</em> monthly error for Mexico when each year is left out of the calibration (our first method: 5.4%)</span><span class="vrow"><em>r = 0.83</em> monthly, against 77,420 fires reported by CONAFOR, 2015 to 2025</span></div>
+    <div><div class="fig">3.2× to 5.9×</div><p>range of the ratio across individual months, so we use one factor per calendar month instead of a single one.</p></div>
+    <div class="open"><b>Validated</b><span class="vrow"><em>3.7%</em> typical error on the yearly total for Mexico when each year is left out of the calibration (worst year: 11.5%)</span><span class="vrow"><em>r = 0.83</em> monthly, against 77,420 fires reported by CONAFOR, 2015 to 2025</span></div>
   </div>
-  <div class="foot"><span>Bars: NOAA-20 hotspots divided by Terra + Aqua hotspots, Mexico, 2019 to 2024. Darker = more fires that month. Validation: docs/research/13.</span><span>5/7</span></div>
+  <div class="foot"><span>Bars: NOAA-20 hotspots divided by Terra + Aqua hotspots, Mexico, 2019 to 2024. Darker = more fires that month. Method and validation: docs/research/14.</span><span>5/7</span></div>
 </section>
 
 <!-- 6 · WHY IT MATTERS -->
@@ -298,7 +298,7 @@ html.print .hud,html.print .nav{display:none}
       <p class="h3">Working today</p>
       <ul class="done">
         <li><b>emberatlas.ink</b> online, data refreshed every day</li>
-        <li>MODIS mapped to the VIIRS scale <b>by region and month</b>, any polygon, with a 10–90% band</li>
+        <li>MODIS mapped to the VIIRS scale with <b>one factor per calendar month</b>, any polygon, with an uncertainty band</li>
         <li>Gas flares and volcanoes removed from the recent months</li>
         <li><b>72 h fire forecast</b> for the area, from our FireCast model</li>
         <li>CSV export and the Ember assistant</li>
@@ -307,7 +307,7 @@ html.print .hud,html.print .nav{display:none}
       <ul class="todo-list">
         <li>An alert when the current month leaves its normal range</li>
         <li>Show how past forecasts turned out, next to each forecast</li>
-        <li>More countries, and the full S-NPP chain for the United States</li>
+        <li>Regional factors per area (designed and tested, not in the app yet) and more countries</li>
       </ul>
     </div>
     <div class="rv d2">

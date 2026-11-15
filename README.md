@@ -71,13 +71,13 @@ flowchart TB
 
   subgraph DB["PostgreSQL 17 + PostGIS"]
     HS[("hotspots<br/>monthly_grid")]
-    HF[("harmonization_factors<br/>static_sites")]
+    HF[("harmonization_k<br/>static_sites")]
     FN["SQL: harmonize_polygon()<br/>harmonized_*_json()"]
     CHAT[("chat_messages<br/>rag_chunks")]
   end
 
   subgraph ML["Python · analysis/"]
-    CAL["pull → calibrate → build_sql<br/>leave-one-year-out validation"]
+    CAL["sensor comparison<br/>validation scripts"]
   end
 
   subgraph FC["FireCast service"]
@@ -112,43 +112,42 @@ month and applies the harmonization factors in SQL (~0.1 s per municipality) →
 the month with its history and asks the FireCast proxy for the next 72 h. Drawn polygons up to 100,000 km² are
 computed on the fly. Every push to `main` redeploys the site through a GitHub Action.
 
-## Harmonization: a calibration chain through real overlaps
+## Harmonization: one factor per calendar month
 
-A single global factor is not enough: the VIIRS/MODIS ratio swings with the season (3.3× in Jan/Sep/Dec, 5.1× in
-June) and with the region. So each older sensor is linked to the reference through a period when **both really flew**:
+Aqua (MODIS) and VIIRS see the same fire seasons (monthly r ≈ 0.99), but VIIRS counts about **8× more hotspots**, and
+that proportion changes with the season. So the method is a ratio per calendar month, measured in the years when
+both really flew, with **one reference satellite per sensor** (never summed, so a new launch cannot create a jump):
 
 ```mermaid
 flowchart RL
-  N20["VIIRS NOAA-20<br/><b>reference</b><br/>2018-04 → now"]
-  SNPP["VIIRS S-NPP<br/>2012-02 → 2018-03"]
-  MOD["MODIS Terra + Aqua<br/>2002-07 → 2012-01"]
+  V["VIIRS<br/><b>reference</b><br/>S-NPP 2012-02 → 2018-03<br/>NOAA-20 2018-04 → now"]
+  AQ["MODIS Aqua<br/>2002-07 → 2012-01"]
   TER["MODIS Terra only<br/>2001-01 → 2002-06"]
-  SNPP -- "k_S · overlap 2018–2025" --> N20
-  MOD -- "k_M · overlap 2012–2023" --> SNPP
-  TER -- "k_T · same overlap" --> SNPP
+  AQ -- "k[month] = median VIIRS ÷ Aqua, 2012–2021" --> V
+  TER -- "k_T[month] = median Aqua ÷ Terra, 2003–2011" --> AQ
 ```
 
-- **Factors per 1° region × calendar month**, with hierarchical shrinkage: regions with few fires borrow from the
-  national value (strength chosen by cross-validation).
-- **Local correction per polygon** `c = (ΣV + β) / (Σpred + β)`: busy areas use their own ratio, quiet ones keep the
-  regional one (this fixed Sierra de Arteaga, a forest range inside farmland).
-- **Uncertainty band** (10–90 %) from leave-one-year-out residuals: 84 % coverage on 1° cells, 80 % on areas.
-- **Same filters for every sensor:** vegetation fires only, nominal/high confidence. Gas flares and volcanoes are
-  removed from the near-real-time feed: **95.6 %** of static detections gone, **1.5 %** of vegetation fires lost
-  (tested out of sample).
-- MODIS is calibrated only up to 2023, because Terra's orbit drift shows from 2024.
+1. **Divide** VIIRS ÷ Aqua for each month in Mexico (Aqua passes at 13:30, like VIIRS).
+2. **Median** over 2012–2021, before the MODIS orbit drift; the interquartile range is the uncertainty band.
+3. **Twelve factors k**, one per calendar month (June needs about ×10.7, January about ×5.9).
+4. **Translate** the MODIS years: Aqua × k (Terra × k_T × k before Aqua flew). From 2012-02 VIIRS is used as observed.
+5. **Compare** each month with its historical median: that colours the calendar.
 
-**Validation (each year hidden, predicted, compared):**
+**Same filters for every sensor:** vegetation fires only, nominal/high confidence. Gas flares and volcanoes are
+removed from the near-real-time feed: **95.6 %** of static detections gone, **1.5 %** of vegetation fires lost
+(tested out of sample). Everything runs in SQL, including the calibration (`refresh_harmonization_k()`).
 
-| Monthly error (WAPE) | First method (one ratio) | **v2 (this)** |
-|---|---|---|
-| Mexico, national | 5.4 % | **3.6 %** |
-| All 1° cells | 23.0 % | **20.7 %** |
-| Sierra de Arteaga | 36.6 % | **25.8 %** |
-| Terra-only months (2001–2002) | −54 % bias | **5.5 %** |
+**Validation (each year of 2012–2021 hidden, predicted from Aqua, compared with VIIRS):** typical error on the yearly
+total **3.7 %** (worst year 2015, +11.5 %), 6.5 % for a single month. `SELECT harmonization_validation_json();`
+reruns it on the database.
 
 Against **77,420 fires reported by CONAFOR** (2015–2025) the harmonized monthly series correlates at **r = 0.83**.
-Full method and limits: [docs/research/13-harmonization-v2.md](docs/research/13-harmonization-v2.md).
+Method and limits: [docs/research/14-harmonization-simple.md](docs/research/14-harmonization-simple.md).
+
+**Improvement designed but not implemented:** a regional version (factors per 1° cell × month with shrinkage, a local
+correction per area, a 10–90 % band) lowered the monthly error in small areas such as Sierra de Arteaga (36.6 % →
+25.8 %). It was left out to keep the method simple; see
+[docs/research/13-harmonization-v2.md](docs/research/13-harmonization-v2.md).
 
 ## FireCast: the 72-hour forecast
 
@@ -229,8 +228,8 @@ Details and caveats: [n8n/README.md](n8n/README.md).
 │   ├── knowledge/          Documents Ember searches
 │   └── DATA_CONTRACT.md    Format of the harmonized series · FORECAST.md
 ├── analysis/
-│   ├── harmonization/      pull.py → calibrate.py → build_sql.py → test_sql.py
-│   ├── db/                 schema.sql, harmonization_v2.sql, chat_memory.sql, rag.sql
+│   ├── harmonization/      Regional v2 scripts (improved method, not used by the app)
+│   ├── db/                 schema.sql, harmonization.sql, chat_memory.sql, rag.sql
 │   └── *.py                Sensor comparison, pixel matching, reported fires, explorer data
 ├── n8n/                  Pipelines (workflow JSON + generator)
 ├── docs/research/        Study of the challenge, users, interface and method (01–13)
@@ -254,7 +253,8 @@ Details and caveats: [n8n/README.md](n8n/README.md).
 | 10 | [Interface design](docs/research/10-interface-design.md) |
 | 11 | [UI audit and references](docs/research/11-ui-audit-and-references.md) |
 | 12 | [Harmonization: state of the art](docs/research/12-harmonization-state-of-the-art.md) |
-| 13 | [Harmonization v2: regional calibration, validated](docs/research/13-harmonization-v2.md) |
+| 13 | [Harmonization v2: regional calibration (improved, not implemented)](docs/research/13-harmonization-v2.md) |
+| 14 | [Harmonization: one factor per calendar month (used by the app)](docs/research/14-harmonization-simple.md) |
 | — | [References](docs/research/references.md) |
 
 Key findings: on Mexico 2019–2024, VIIRS NOAA-20 detects ~4.2× more hotspots than MODIS, but the monthly series
@@ -269,13 +269,11 @@ delivering data on Nov 2, 2026; VIIRS continuity is NOAA-20 / NOAA-21.
 python analysis/sensor_overlap.py --country Mexico --years 2019 2020 2021 2022 2023 2024
 ```
 
-**Harmonization** (needs `DATABASE_URL` in `.env`; read-only access is enough):
+**Harmonization:** apply `analysis/db/harmonization.sql` on the database after `schema.sql` (it computes the factors
+itself), then check it:
 
-```bash
-python analysis/harmonization/pull.py
-python analysis/harmonization/calibrate.py
-python analysis/harmonization/build_sql.py
-python analysis/harmonization/test_sql.py
+```sql
+SELECT harmonization_validation_json();
 ```
 
 **Web app** (Node 22). Without a database it serves sample series from `public/data/harmonized/`:
@@ -296,8 +294,8 @@ front-end code.
 
 ## Limits we know about
 
-- Calibrated on Mexico; US areas use Mexico's national fallback and skip the S-NPP link (no S-NPP downloaded for the US).
-- Small areas in the Terra-only months (2001–2002) are uncertain (±50 % or more); the page shows the range.
+- Factors are national (Mexico) and apply everywhere, so small areas are noisy; US areas use Aqua × k until NOAA-20 (no S-NPP downloaded for the US).
+- The Terra-only months (2001–mid 2002) are the least certain; the page shows the range.
 - Months are UTC months, without a day/night split.
 - The forecast is a probability, not a guarantee; the area chance assumes independent cells.
 

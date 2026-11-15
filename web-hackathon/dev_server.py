@@ -170,7 +170,9 @@ class Handler(SimpleHTTPRequestHandler):
         for m in self.area_json(req)["months"]:
             viirs = m["source"] == "VIIRS"
             modis = round(m["count"] / (4.2 * rnd.uniform(0.8, 1.25)))
-            out.append({"month": m["month"], "modis": modis, "noaa20": m["count"] if viirs else 0, "snpp": 0, "noaa21": 0})
+            aqua = round(modis * rnd.uniform(0.5, 0.6))
+            out.append({"month": m["month"], "modis": modis, "aqua": aqua,
+                        "noaa20": m["count"] if viirs else 0, "snpp": 0, "noaa21": 0})
         return out
 
     def mock_hotspots(self, req):

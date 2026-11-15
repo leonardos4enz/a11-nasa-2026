@@ -87,7 +87,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 .pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:500;white-space:nowrap}
 .spacer{flex:1}
-.main{display:grid;grid-template-columns:400px minmax(0,1fr);min-height:0}
+.main{display:grid;grid-template-columns:var(--pw,400px) minmax(0,1fr);min-height:0;transition:grid-template-columns .28s cubic-bezier(.2,.8,.2,1)}
 .panel{border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;min-height:0;min-width:0;container:insp/inline-size}
 /* Segmented icon tabs: every tab is an icon; the selected one also shows its name, the rest name themselves on hover. */
 .tabs{display:flex;gap:2px;margin:10px 12px;padding:3px;border-radius:8px;background:var(--surface-2);flex:none}
@@ -154,8 +154,8 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 /* ---------- dock ---------- */
 .dock{border-top:1px solid var(--border);background:var(--surface);padding:12px 16px 16px;container-type:inline-size}
-.tl{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;gap:12px;align-items:center}
-.tl .hop{display:flex;align-items:center;gap:4px}
+.tl{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;gap:12px;align-items:start}
+.tl .hop{display:flex;align-items:flex-start;gap:4px}
 .btn.icon.sm{width:28px;height:28px;border-radius:6px}
 .btn.icon.sm[disabled]{opacity:.35;cursor:default}
 .tl .zoom{display:flex;align-items:center;gap:4px}
@@ -183,19 +183,21 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .fckey i{width:12px;height:12px;border-radius:3px;display:inline-block}
 .fcsq{width:12px;height:12px;border-radius:2px;background:#d7301f;opacity:.75}
 .tl .now small{display:block;font-weight:400;color:var(--text-3);font-size:12px;line-height:14px}
-.stripes{position:relative;height:44px;cursor:pointer;touch-action:none}
-.stripes .bars{position:absolute;left:0;right:0;top:0;height:24px;display:flex;border-radius:4px;overflow:hidden;background:var(--surface-2)}
+.stripes{position:relative;height:calc(var(--bar-h,24px) + 20px);cursor:pointer;touch-action:none}
+.stripes .bars{position:absolute;left:0;right:0;top:0;height:var(--bar-h,24px);display:flex;border-radius:4px;overflow:hidden;background:var(--surface-2)}
 .stripes .bars i{flex:1;min-width:0}
-.stripes .yrs{position:absolute;left:0;right:0;top:28px;height:14px;font-size:12px;color:var(--text-3)}
+.stripes .yrs{position:absolute;left:0;right:0;top:calc(var(--bar-h,24px) + 4px);height:14px;font-size:12px;color:var(--text-3)}
 .stripes .yrs span{position:absolute;transform:translateX(-50%)}
 .stripes .era{position:absolute;top:-2px;height:2px;background:var(--text-3);opacity:.6}
-.stripes .cursor{position:absolute;top:-4px;width:2px;height:32px;background:var(--text);border-radius:1px;transition:left .12s}
+.stripes .cursor{position:absolute;top:-4px;width:2px;height:calc(var(--bar-h,24px) + 8px);background:var(--text);border-radius:1px;transition:left .12s}
 .stripes .cursor::after{content:"";position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--text);box-shadow:0 0 0 3px var(--surface)}
 .charts{display:grid;grid-template-columns:1.1fr 1.1fr .9fr;gap:24px;margin-top:12px}
 .chart h4,.sect h4{margin:0 0 6px;font-size:12px;line-height:16px;font-weight:500;color:var(--text-3);letter-spacing:.02em;text-transform:uppercase}
-.chart svg{display:block;width:100%;height:120px}
+.chart svg{display:block;width:100%;height:var(--chart-h,120px)}
 .chart svg text{fill:var(--text-3);font-size:12px}
-.notable{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:120px;overflow:auto}
+.chart .pm{fill:var(--text);fill-opacity:0;cursor:pointer}
+.chart .pm:hover{fill-opacity:.06}
+.notable{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:var(--chart-h,120px);overflow:auto}
 .notable button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;padding:5px 6px;border-radius:6px;cursor:pointer;text-align:left}
 .notable button:hover{background:var(--surface-2)}
 .notable .sw{width:10px;height:10px;border-radius:3px;flex:none}
@@ -290,7 +292,7 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
 .kv .s{font-size:12px;color:var(--text-2)}
 .dlmsg{font-size:12px;color:var(--text-2);margin-top:8px;min-height:16px}
 .dl .btn[disabled]{opacity:.55;cursor:not-allowed}
-.stripes .rband{position:absolute;top:-4px;height:32px;border:2px solid var(--text-2);border-radius:5px;pointer-events:none;background:color-mix(in srgb,var(--text) 6%,transparent)}
+.stripes .rband{position:absolute;top:-4px;height:calc(var(--bar-h,24px) + 8px);border:2px solid var(--text-2);border-radius:5px;pointer-events:none;background:color-mix(in srgb,var(--text) 6%,transparent)}
 /* ---------- method tab ---------- */
 .mchart svg{display:block;width:100%;height:150px}
 .mchart svg text{fill:var(--text-3);font-size:11px}
@@ -323,7 +325,51 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
 @media (max-width:1200px){.top .hide-s{display:none}.pick-btn{max-width:260px}.top{gap:8px}}
 @media (max-width:1400px){.brand .sub{display:none}}
 @media (max-width:1100px){.charts{grid-template-columns:1fr 1fr}.charts .chart:last-child{display:none}}
-@media (max-width:1060px) and (min-width:901px){.brand>span:last-child{display:none}.main{grid-template-columns:360px minmax(0,1fr)}}
+/* ---------- collapsible + resizable side panel, dock and Ember ---------- */
+.phead{display:flex;align-items:center;gap:6px;margin:10px 12px 10px 8px;flex:none}
+.phead .tabs{margin:0;flex:1;min-width:0}
+.side-toggle{flex:none;color:var(--text-2)}
+.panel{position:relative}
+.pane{transition:opacity .2s}
+.app.pane-fade .pane{opacity:0;transition:none}
+.dock{position:relative}
+.dock-toggle{position:absolute;z-index:1002;left:50%;top:0;transform:translate(-50%,-100%);display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 12px;border:1px solid var(--border);border-bottom:0;border-radius:8px 8px 0 0;background:var(--surface);color:var(--text-2);font:inherit;font-size:12px;font-weight:500;cursor:pointer}
+.dock-toggle:hover{color:var(--text)}
+.dock-toggle svg.i{width:14px;height:14px;transition:transform .28s}
+.app.dock-min .dock-toggle svg.i{transform:rotate(180deg)}
+.chart h4{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Drag handles: a thin strip on the edge, a line shows on hover or while dragging. Double-click resets. */
+.rz{position:absolute;z-index:1001;touch-action:none;outline:none}
+.rz::after{content:"";position:absolute;background:var(--text-3);opacity:0;transition:opacity .15s}
+.rz:hover::after,.rz:focus-visible::after,.rz.on::after{opacity:.6}
+.rz-x{top:0;bottom:0;width:8px;cursor:col-resize}
+.rz-x::after{top:0;bottom:0;left:3px;width:2px}
+.rz-y{left:0;right:0;height:8px;top:-4px;cursor:row-resize}
+.rz-y::after{left:0;right:0;top:3px;height:2px}
+.panel>.rz{right:-4px}
+.stripes>.rz{top:auto;bottom:-7px;cursor:row-resize}
+@media (min-width:1201px){.ember-panel{position:relative}}   /* ≤ 1200 px it is a fixed drawer (assistant.css) */
+.ember-panel>.rz{left:-4px}
+.app.resizing,.app.resizing *{cursor:inherit;user-select:none}
+.app.resizing .main,.app.resizing .charts{transition:none}
+.app.resizing #map{pointer-events:none}
+@media (min-width:901px){
+  .charts{height:calc(var(--chart-h,120px) + 22px);overflow:hidden;transition:height .28s cubic-bezier(.2,.8,.2,1),margin-top .28s,opacity .2s}
+  .app.dock-min .charts{height:0;margin-top:0;opacity:0;pointer-events:none}
+  .app.panel-min .main{grid-template-columns:56px minmax(0,1fr)}
+  .app.panel-min.cmp-open .main{grid-template-columns:56px minmax(0,1fr) var(--ew,380px)}
+  .app.panel-min .phead{flex-direction:column;margin:10px 8px}
+  .app.panel-min .tabs{flex-direction:column;width:100%}
+  .app.panel-min .tabs button{flex:none;width:100%;height:36px;padding:0}
+  .app.panel-min .tabs button .tl{display:none}
+  .app.panel-min .pane{display:none}
+}
+@media (min-width:1201px){.app.panel-min .main{grid-template-columns:56px minmax(0,1fr) 0px}.app.panel-min.cmp-open .main{grid-template-columns:56px minmax(0,1fr) var(--ew,380px)}}
+@media (min-width:901px) and (max-width:1360px){.app.panel-min.cmp-open .main{grid-template-columns:56px minmax(0,1fr) var(--ew,340px)}}
+@media (min-width:901px) and (max-width:1200px){.app.panel-min.cmp-open .main{grid-template-columns:56px minmax(0,1fr)}.ember-panel>.rz{display:none}}
+@media (max-width:900px){.side-toggle,.rz{display:none}.app.dock-min .charts{display:none}}
+@media (prefers-reduced-motion:reduce){.main,.charts,.pane,.dock-toggle svg.i{transition:none!important}}
+@media (max-width:1060px) and (min-width:901px){.brand>span:last-child{display:none}.main{grid-template-columns:var(--pw,360px) minmax(0,1fr)}}
 @media (max-width:900px){
   .app{height:auto;grid-template-rows:auto auto}
   .top{flex-wrap:wrap;padding:8px 16px;gap:8px}
@@ -367,6 +413,8 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-newchat" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></symbol>
+  <symbol id="i-side-hide" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M16 10l-2 2 2 2"/></symbol>
+  <symbol id="i-side-show" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M14 10l2 2-2 2"/></symbol>
   <symbol id="i-panel-close" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M8 10l2 2-2 2"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></symbol>
   <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/><path d="M6 6v12"/></symbol>
@@ -395,7 +443,9 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
   </header>
 
   <div class="main">
-    <aside class="panel">
+    <aside class="panel" id="panel">
+      <div class="phead">
+      <button type="button" class="btn icon ghost side-toggle" id="panelToggle" aria-expanded="true" aria-controls="panel" aria-label="Collapse the side panel" title="Collapse the side panel ( [ )"><svg class="i"><use href="#i-side-hide"/></svg></button>
       <nav class="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-t="overview" aria-label="Overview" data-tip="Overview"><svg class="i"><use href="#i-t-overview"/></svg><span class="tl">Overview</span></button>
         <button role="tab" aria-selected="false" data-t="season" aria-label="Season" data-tip="Season"><svg class="i"><use href="#i-t-season"/></svg><span class="tl">Season</span></button>
@@ -403,6 +453,7 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
         <button role="tab" aria-selected="false" data-t="method" aria-label="Method" data-tip="Method"><svg class="i"><use href="#i-t-method"/></svg><span class="tl">Method</span></button>
         <button role="tab" aria-selected="false" data-t="data" aria-label="Report" data-tip="Report"><svg class="i"><use href="#i-t-report"/></svg><span class="tl">Report</span></button>
       </nav>
+      </div>
 
       <section class="pane" id="p-overview" role="tabpanel">
         <div id="hero"></div>
@@ -558,7 +609,8 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
           <button class="btn ink sm2" id="drawDone" title="Close the shape (Enter)">Finish</button>
           <button class="btn icon" id="drawCancel" aria-label="Cancel drawing" title="Cancel (Esc)" style="height:28px;width:28px"><svg class="i"><use href="#i-x"/></svg></button></div>
       </div>
-      <div class="dock">
+      <div class="dock" id="dock">
+        <button type="button" class="dock-toggle" id="dockToggle" aria-expanded="true" aria-controls="dockCharts" title="Hide the charts ( ] )"><svg class="i"><use href="#i-down"/></svg><span>Hide charts</span></button>
         <div class="tl">
           <button class="btn icon" id="play" aria-label="Play through time"><svg class="i"><use href="#i-play"/></svg></button>
           <div class="hop">
@@ -576,7 +628,7 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
           </div>
           <button class="fcbtn" id="fcBtn" aria-pressed="false" title="Fire forecast for the next 72 hours (model)"><span class="sw" id="fcSw"></span><span><b id="fcPct">…</b><small>Next 72 h</small></span></button>
         </div>
-        <div class="charts">
+        <div class="charts" id="dockCharts">
           <div class="chart"><h4 id="profTitle">Season profile</h4><svg id="prof"></svg></div>
           <div class="chart"><h4>Hotspots per year</h4><svg id="annual"></svg></div>
           <div class="chart"><h4>Notable months</h4><ul class="notable" id="notable"></ul></div>
@@ -1090,7 +1142,9 @@ function renderProf(){
   h+=`<path d="M${pts.map(p=>p.join(',')).join('L')}" fill="none" stroke="#E8590C" stroke-width="2.5"/>`;
   yr.forEach((v,m)=>{if(v!=null)h+=`<circle cx="${x(m)}" cy="${y(v)}" r="${m===sel.m?5:2.5}" fill="${m===sel.m?'#E8590C':'var(--surface)'}" stroke="#E8590C" stroke-width="2" data-tip="${FULL[m]} ${sel.y}: ${v} · typical ${Math.round(med[m])}"/>`});
   MONTHS.forEach((m,i)=>h+=`<text x="${x(i)}" y="${H-4}" text-anchor="middle" ${i===sel.m?'style="fill:var(--text);font-weight:600"':''}>${m[0]}</text>`);
-  svg.innerHTML=h;$('profTitle').innerHTML=`Season profile · <span style="color:#E8590C">${sel.y}</span> vs normal range`;
+  // Each month's whole column (dot and label included) is a click target that moves the timeline to that month.
+  const cw=(W-L-R)/12;yr.forEach((v,m)=>{if(v!=null)h+=`<rect class="pm${m===sel.m?' on':''}" x="${x(m)-cw/2}" y="0" width="${cw}" height="${H}" data-m="${m}" data-tip="${FULL[m]} ${sel.y}: ${v} · typical ${Math.round(med[m])} · click to select"/>`});
+  svg.innerHTML=h;svg.querySelectorAll('.pm').forEach(r=>r.onclick=()=>select(sel.y,+r.dataset.m));$('profTitle').innerHTML=`Season profile · <span style="color:#E8590C">${sel.y}</span> vs normal range`;
 }
 function renderAnnual(){
   const svg=$('annual'),{W,H}=svgSize(svg),R=8,T=8,B=20,ys=[];let L=36;
@@ -1433,6 +1487,64 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>{if(
   repReady.then(j=>{if(j&&area){renderReported();renderRangeSum()}});
   new ResizeObserver(()=>{renderProf();renderAnnual();renderRange(val(area,sel.y,sel.m),base(area,sel.y,sel.m),classify(val(area,sel.y,sel.m),base(area,sel.y,sel.m)));map.invalidateSize()}).observe(document.querySelector('.stage'));
 })();
+// Side panel, dock charts and Ember: collapse/expand (animated) and resize by dragging their edge.
+// Charts are redrawn at their new pixel size (never stretched). Sizes and states are remembered per browser.
+(()=>{const app=document.querySelector('.app'),pb=$('panelToggle'),db=$('dockToggle'),panel=$('panel'),ember=$('ember-panel');
+  const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}},put=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,String(v))}catch(e){}};
+  const minned=c=>app.classList.contains(c),clamp=(v,a,b)=>Math.round(Math.max(a,Math.min(b,v)));
+  const S={pw:+get('bac-pw')||0,ew:+get('bac-ew')||0,ch:+get('bac-ch')||0,bh:+get('bac-bh')||0};   // 0 = default size from the CSS
+  const MAP_MIN_W=420,MAP_MIN_H=240;
+  const limits={
+    pw:()=>[280,Math.max(280,Math.min(640,innerWidth-MAP_MIN_W-(minned('cmp-open')?(S.ew||380):0)))],
+    ew:()=>[300,Math.max(300,Math.min(640,innerWidth-MAP_MIN_W-(minned('panel-min')?56:(S.pw||400))))],
+    ch:()=>{const st=document.querySelector('.stage').clientHeight,tl=document.querySelector('.dock .tl').offsetHeight;return[80,Math.max(80,Math.min(420,st-tl-60-MAP_MIN_H))]}};
+  limits.bh=()=>[12,72];
+  const VAR={pw:'--pw',ew:'--ew',ch:'--chart-h',bh:'--bar-h'};
+  function apply(){for(const k in S){if(!S[k]){app.style.removeProperty(VAR[k]);continue}const[a,b]=limits[k]();app.style.setProperty(VAR[k],clamp(S[k],a,b)+'px')}}
+  let raf=0;const refresh=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;map.invalidateSize();if(area){renderProf();renderAnnual()}})};
+  const ro=new ResizeObserver(refresh);['prof','annual'].forEach(id=>ro.observe($(id)));ro.observe(document.querySelector('.mapwrap'));
+  function setPanel(min,save=true){if(min===minned('panel-min'))return;
+    if(!min&&save){app.classList.add('pane-fade');setTimeout(()=>app.classList.remove('pane-fade'),280)}
+    app.classList.toggle('panel-min',min);pb.setAttribute('aria-expanded',String(!min));
+    const t=min?'Expand the side panel ( [ )':'Collapse the side panel ( [ )';pb.title=t;pb.setAttribute('aria-label',t.replace(/ \(.*/,''));
+    pb.querySelector('use').setAttribute('href',min?'#i-side-show':'#i-side-hide');if(save)put('bac-panel-min',min?1:0)}
+  function setDock(min,save=true){if(min===minned('dock-min'))return;
+    app.classList.toggle('dock-min',min);db.setAttribute('aria-expanded',String(!min));
+    db.title=min?'Show the charts ( ] )':'Hide the charts ( ] )';db.querySelector('span').textContent=min?'Show charts':'Hide charts';
+    if(save)put('bac-dock-min',min?1:0)}
+  pb.onclick=()=>setPanel(!minned('panel-min'));
+  db.onclick=()=>setDock(!minned('dock-min'));
+  document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{if(minned('panel-min'))setPanel(false)}));
+  addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||e.target.closest('input,textarea,select,[contenteditable]'))return;
+    if(e.key==='[')pb.click();else if(e.key===']')db.click()});
+  // A drag handle. size(): current pixel size; sign: +1 if dragging right/up grows it; fold: collapse rule {min, set} or null.
+  function handle(host,axis,key,label,size,sign,fold){
+    const h=document.createElement('div');h.className='rz rz-'+axis;h.tabIndex=0;h.setAttribute('role','separator');
+    h.setAttribute('aria-orientation',axis==='x'?'vertical':'horizontal');h.setAttribute('aria-label','Resize '+label);h.title='Drag to resize · double-click to reset';
+    host.prepend(h);['pointerdown','keydown','click','wheel'].forEach(t=>h.addEventListener(t,e=>e.stopPropagation()));
+    const set=v=>{if(fold){if(v<fold.min){fold.set(true);return}fold.set(false)}const[a,b]=limits[key]();S[key]=clamp(v,a,b);apply()};
+    const save=()=>put('bac-'+key,S[key]||null);
+    h.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();h.setPointerCapture(e.pointerId);
+      const p0=axis==='x'?e.clientX:e.clientY,s0=fold&&fold.isMin()?fold.min:size(),k0=S[key];
+      app.classList.add('resizing');h.classList.add('on');document.body.style.cursor=axis==='x'?'col-resize':'row-resize';
+      const mv=ev=>set(s0+sign*((axis==='x'?ev.clientX:ev.clientY)-p0));
+      const up=()=>{h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);
+        app.classList.remove('resizing');h.classList.remove('on');document.body.style.cursor='';
+        if(fold&&fold.isMin()){S[key]=k0;apply()}save();refresh()};   // folded: keep the size it had before this drag
+      h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)});
+    h.addEventListener('dblclick',()=>{S[key]=0;apply();save();fold&&fold.set(false)});
+    h.addEventListener('keydown',e=>{const d=(axis==='x'?{ArrowLeft:-1,ArrowRight:1}:{ArrowUp:-1,ArrowDown:1})[e.key];if(!d)return;e.preventDefault();
+      set((fold&&fold.isMin()?fold.min:size())+sign*d*(e.shiftKey?64:16));save()})}
+  handle(panel,'x','pw','the side panel',()=>panel.getBoundingClientRect().width,1,
+    {min:200,isMin:()=>minned('panel-min'),set:m=>setPanel(m)});
+  handle(ember,'x','ew','Ember',()=>ember.getBoundingClientRect().width,-1,null);
+  handle($('dock'),'y','ch','the charts',()=>$('prof').getBoundingClientRect().height,-1,
+    {min:60,isMin:()=>minned('dock-min'),set:m=>setDock(m)});
+  // Timeline: the edge under the year labels sets the height of the colour strip.
+  handle($('stripes'),'y','bh','the timeline',()=>document.querySelector('.stripes .bars').getBoundingClientRect().height,1,null);
+  addEventListener('resize',apply);
+  new MutationObserver(apply).observe(app,{attributes:true,attributeFilter:['class']});
+  setPanel(get('bac-panel-min')==='1',false);setDock(get('bac-dock-min')==='1',false);apply()})();
 </script>
 <script src="/fx.js"></script>
 <script src="/ember.js"></script>

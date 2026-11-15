@@ -1,8 +1,8 @@
 /* Ember assistant: collapsible right sidebar (pattern from erp-ai spec 047 "Acompañante").
    Desktop: a third grid column that pushes the map. ≤ 1200 px: a fixed drawer over the page with a backdrop. */
 
-.app.cmp-open .main { grid-template-columns: 400px minmax(0, 1fr) 380px; }
-@media (max-width: 1360px) { .app.cmp-open .main { grid-template-columns: 340px minmax(0, 1fr) 340px; } }
+.app.cmp-open .main { grid-template-columns: var(--pw, 400px) minmax(0, 1fr) var(--ew, 380px); }
+@media (max-width: 1360px) { .app.cmp-open .main { grid-template-columns: var(--pw, 340px) minmax(0, 1fr) var(--ew, 340px); } }
 /* With the panel open the dock is narrower: keep the two charts, drop the notable-months list. */
 @media (min-width: 1201px) and (max-width: 1700px) {
   .app.cmp-open .charts { grid-template-columns: 1fr 1fr; }
@@ -93,3 +93,23 @@
   .app.cmp-open .main { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .ember-typing i { animation: none; opacity: .6; } }
+
+/* Open/close animation (assistant.js adds .ember-in for one frame on open and .ember-out until the close ends).
+   Desktop: the third grid column grows from 0 while the content fades in, so text never reflows in view.
+   Drawer (≤ 1200 px): the panel slides in from the right edge. */
+.ember-panel { overflow: hidden; }
+.ember-panel > * { transition: opacity .2s ease .1s; }
+.ember-panel.ember-in > *, .ember-panel.ember-out > * { opacity: 0; transition: opacity .12s ease; }
+.ember-backdrop { transition: opacity .28s; }
+@media (min-width: 1201px) {
+  .app .main { grid-template-columns: var(--pw, 400px) minmax(0, 1fr) 0px; }
+  .app.cmp-open .main { grid-template-columns: var(--pw, 400px) minmax(0, 1fr) var(--ew, 380px); }
+}
+@media (min-width: 1201px) and (max-width: 1360px) {
+  .app.cmp-open .main { grid-template-columns: var(--pw, 340px) minmax(0, 1fr) var(--ew, 340px); }
+}
+@media (max-width: 1200px) {
+  .ember-panel { transition: transform .28s cubic-bezier(.2, .8, .2, 1); }
+  .ember-panel.ember-in, .ember-panel.ember-out { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) { .ember-panel, .ember-panel > * { transition: none !important; } }

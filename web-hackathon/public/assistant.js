@@ -68,7 +68,7 @@
       (c.synthetic ? " The app currently shows illustrative data."
         : ` Counts are VIIRS-equivalent FIRMS hotspots${c.provisional ? " (provisional harmonization)" : ""}.`) + "]";
   }
-  window.addEventListener("a11:context", () => { if (!panel.hidden) renderContext(); });
+  window.addEventListener("a11:context", () => { if (isOpen()) renderContext(); });
 
   // ---- Messages ----
   // All the page actions of one user turn render as a single collapsible stack (at the first action's place),
@@ -118,7 +118,7 @@
       const item = { role: "confirm", text: String(text), yes: yesLabel || "Yes" };
       history.push(item);
       pendingConfirm = { item, resolve };
-      if (panel.hidden) setOpen(true, false); // the question must be visible, also on narrow screens
+      if (!isOpen()) setOpen(true, false); // the question must be visible, also on narrow screens
       mood("curious");
       stateEl.textContent = "Waiting for your answer";
       render();
@@ -259,7 +259,7 @@
           continue;
         }
         // On narrow screens the panel is a drawer over the map: get it out of the way while Ember works.
-        if (narrow() && !panel.hidden) { setOpen(false, false); hidPanel = true; }
+        if (narrow() && isOpen()) { setOpen(false, false); hidPanel = true; }
         agentUI.begin();
         mood("working");
         stateEl.textContent = "Using the page…";
@@ -304,9 +304,21 @@
   form.addEventListener("submit", (e) => { e.preventDefault(); ask(input.value); });
 
   // ---- Open / close ----
+  // Open/close slide: the panel stays in the layout until its closing animation ends (assistant.css: .ember-in / .ember-out).
+  let closeTimer = 0, animReady = false;
+  const ANIM_MS = 280, reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function isOpen() { return app.classList.contains("cmp-open"); }
   function setOpen(open, focus = true) {
+    const animate = animReady && !reduced() && open !== isOpen();
+    clearTimeout(closeTimer); panel.classList.remove("ember-out");
     app.classList.toggle("cmp-open", open);
-    panel.hidden = !open;
+    if (open) {
+      panel.hidden = false;
+      if (animate) { panel.classList.add("ember-in"); void panel.offsetWidth; setTimeout(() => panel.classList.remove("ember-in"), 20); }
+    } else if (animate && !panel.hidden) {
+      panel.classList.add("ember-out");
+      closeTimer = setTimeout(() => { panel.hidden = true; panel.classList.remove("ember-out"); }, ANIM_MS);
+    } else panel.hidden = true;
     backdrop.hidden = !(open && narrow());
     toggle.setAttribute("aria-expanded", String(open));
     toggle.classList.toggle("on", open);
@@ -317,10 +329,10 @@
       if (focus) { mood("curious", 1600); setTimeout(() => input.focus(), 0); }
     } else if (focus) toggle.focus();
   }
-  toggle.addEventListener("click", () => setOpen(panel.hidden));
+  toggle.addEventListener("click", () => setOpen(!isOpen()));
   $("ember-close").addEventListener("click", () => setOpen(false));
   backdrop.addEventListener("click", () => setOpen(false));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden && narrow()) setOpen(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && isOpen() && narrow()) setOpen(false); });
   $("ember-new").addEventListener("click", () => {
     if (busy) return;
     history = []; save();
@@ -332,4 +344,5 @@
   mood("idle");
   updateSend();
   setOpen(!narrow() && get(KEY_OPEN) === "1", false);
+  animReady = true; // no animation for the state restored on load
 })();

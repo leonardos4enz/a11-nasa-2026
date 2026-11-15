@@ -46,6 +46,8 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .top{display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);background:var(--surface);min-width:0;overflow:hidden}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;white-space:nowrap;margin-right:8px}
 .brand .logo{height:22px;width:auto;display:block}
+.brand-home{display:flex;align-items:center;border:0;background:none;padding:4px 6px;margin:-4px -6px;border-radius:6px;cursor:pointer}
+.brand-home:hover{background:var(--surface-2)}
 .brand .logo.dk,:root[data-theme="dark"] .brand .logo.lt{display:none}
 :root[data-theme="dark"] .brand .logo.dk{display:block}
 .brand .sub{font-size:13px;font-weight:500;color:var(--text-3);padding-left:10px;border-left:1px solid var(--border);line-height:20px}
@@ -159,6 +161,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .btn.icon.sm{width:28px;height:28px;border-radius:6px}
 .btn.icon.sm[disabled]{opacity:.35;cursor:default}
 .tl .zoom{display:flex;align-items:center;gap:4px}
+.tl .zoom .zsep{width:1px;height:18px;background:var(--border);margin:0 4px}
 @media (max-width:900px){.tl{grid-template-columns:auto 1fr auto;row-gap:8px}.tl .hop{justify-self:center}.tl .stripes{grid-column:1/-1;order:5}}
 .tl .zoom .zl{min-width:34px;text-align:center;font-size:12px;color:var(--text-2);font-weight:500}
 .stripes .bars i.off{opacity:.25}
@@ -413,6 +416,7 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-newchat" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></symbol>
   <symbol id="i-side-hide" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M16 10l-2 2 2 2"/></symbol>
   <symbol id="i-side-show" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M14 10l2 2-2 2"/></symbol>
   <symbol id="i-panel-close" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M8 10l2 2-2 2"/></symbol>
@@ -429,7 +433,7 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><img class="logo lt" src="/brand/ember-atlas-light.svg" alt="Ember Atlas" width="115" height="22"><img class="logo dk" src="/brand/ember-atlas.svg" alt="" aria-hidden="true" width="115" height="22"><span class="sub">Burning Activity Calendar</span></div>
+    <div class="brand"><button type="button" class="brand-home" id="brandHome" title="Reset the layout and show the Overview" aria-label="Ember Atlas: reset the layout and show the Overview"><img class="logo lt" src="/brand/ember-atlas-light.svg" alt="" width="115" height="22"><img class="logo dk" src="/brand/ember-atlas.svg" alt="" aria-hidden="true" width="115" height="22"></button><span class="sub">Burning Activity Calendar</span></div>
     <button type="button" class="field pick-btn" id="pickBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="pickPop" title="Choose an area of interest">
       <svg class="i"><use href="#i-search"/></svg><span class="cc" id="pickCC"></span><span class="pick-name" id="pickName">Loading areas…</span><svg class="i chev"><use href="#i-down"/></svg>
     </button>
@@ -625,6 +629,8 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
             <button class="btn icon sm" id="zoomOut" aria-label="Zoom out the timeline" title="Zoom out (or scroll on the timeline)"><svg class="i"><use href="#i-minus"/></svg></button>
             <span class="zl" id="zoomLabel">All</span>
             <button class="btn icon sm" id="zoomIn" aria-label="Zoom in the timeline" title="Zoom in (or scroll on the timeline; Shift + scroll pans)"><svg class="i"><use href="#i-plus"/></svg></button>
+            <span class="zsep" aria-hidden="true"></span>
+            <button class="btn icon sm" id="resetSel" aria-label="Reset selections" title="Reset selections: month, timeline zoom, map position, layers and filters, Season view, burn calendar and report period. The area stays."><svg class="i"><use href="#i-reset"/></svg></button>
           </div>
           <button class="fcbtn" id="fcBtn" aria-pressed="false" title="Fire forecast for the next 72 hours (model)"><span class="sw" id="fcSw"></span><span><b id="fcPct">…</b><small>Next 72 h</small></span></button>
         </div>
@@ -1462,6 +1468,19 @@ window.A11Context=()=>{if(!area)return null;const v=val(area,sel.y,sel.m),b=base
     forecast_72h:FC&&!FC.error?{chance_any_hotspot:Math.round(FC.pAny*100)/100,riskiest_cell:Math.round(FC.pMax*100)/100,
       risk_level_riskiest_cell:FC.level,window:`${FC.meta.valid_from} to ${FC.meta.valid_to}`,based_on_data_through:FC.meta.issue_date}:null}};
 const announce=()=>window.dispatchEvent(new Event('a11:context'));
+// Reset button on the timeline: every selection back to how the page opens, for the area on screen.
+function defaultMonth(){const cy=MONTHS.map((_,m)=>m<=NOW_M?val(area,CY,m):-1);return{y:CY,m:cy.indexOf(Math.max(...cy))}}
+function resetSelections(){if(!area)return;
+  if(playing){clearInterval(playing);playing=null;$('play').innerHTML=icon('i-play',16)}
+  sel=defaultMonth();zoomI=0;setView(0);
+  document.querySelectorAll('#lyFilters [data-ft]').forEach(i=>i.checked=i.dataset.ft==='0');
+  document.querySelectorAll('#lyFilters [data-frp]').forEach(i=>i.checked=true);lyBadge();
+  for(const id of ['lyHot','lyArea'])if(!$(id).checked){$(id).checked=true;$(id).onchange({target:$(id)})}
+  setFcLayer(false);
+  mode='count';document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode==='count'));
+  allowed=new Set([0,10,11]);preset('year');
+  fitted=null;renderAll(false)}
+$('resetSel').onclick=resetSelections;
 function select(y,m,fromPlay){if(isFuture(y,m))return;sel={y,m};if(!fromPlay&&playing){clearInterval(playing);playing=null;$('play').innerHTML=icon('i-play',16)}
   renderHero(true);renderMap();placeCursor();renderProf();renderAnnual();renderReported();if(!$('p-season').hidden)renderHeat();announce()}
 function renderAll(newArea){if(newArea){fitted=null;loadForecast()}else renderForecast();renderHero(false);renderMap();renderStripes();placeCursor();placeRange();renderProf();renderAnnual();renderNotable();renderHeat();renderBurn();
@@ -1477,7 +1496,7 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>{if(
   Y0=H.firstYear;Y1=H.baselineLast;CY=H.currentYear;NOW_M=H.currentMonth;NOW_D=H.currentDay;ERA_END=H.eraEnd;TOTAL=idx(CY,NOW_M)+1;
   AREAS=H.areas;area=AREAS[0];
   // Open on the busiest month of the current year so far.
-  const cy=MONTHS.map((_,m)=>m<=NOW_M?val(area,CY,m):-1);sel={y:CY,m:cy.indexOf(Math.max(...cy))};
+  sel=defaultMonth();
   const pill=$('dataPill');
   if(H.synthetic){pill.title=`Synthetic harmonized series (${H.meta.method}). It is not real FIRMS data.`}
   else{pill.querySelector('span').textContent=`${H.provisional?'Provisional · ':''}Data through ${H.meta.data_through}`;
@@ -1542,6 +1561,9 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>{if(
     {min:60,isMin:()=>minned('dock-min'),set:m=>setDock(m)});
   // Timeline: the edge under the year labels sets the height of the colour strip.
   handle($('stripes'),'y','bh','the timeline',()=>document.querySelector('.stripes .bars').getBoundingClientRect().height,1,null);
+  // Logo: put every section back to its default size and state (animated) and show the Overview.
+  $('brandHome').onclick=()=>{for(const k in S){S[k]=0;put('bac-'+k,null)}apply();setPanel(false);setDock(false);
+    selectTab('overview');$('p-overview').scrollTop=0};
   addEventListener('resize',apply);
   new MutationObserver(apply).observe(app,{attributes:true,attributeFilter:['class']});
   setPanel(get('bac-panel-min')==='1',false);setDock(get('bac-dock-min')==='1',false);apply()})();

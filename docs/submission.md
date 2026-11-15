@@ -105,7 +105,7 @@ Where it is disclosed in the project: README section "AI (SI) assistance disclos
 | FIRMS Area API (near real-time hotspots) | https://firms.modaps.eosdis.nasa.gov/api/area/ |
 | MODIS Collection 6.1 Active Fire product (MCD14) | https://www.earthdata.nasa.gov/data/instruments/modis/near-real-time-data |
 | VIIRS 375 m Active Fire product (VNP14IMG / VJ114IMG) | https://www.earthdata.nasa.gov/data/instruments/viirs/viirs-i-band-375-m-active-fire-data |
-| LANCE — Land, Atmosphere Near real-time Capability for Earth observations | https://www.earthdata.nasa.gov/data/tools/lance |
+| LANCE — Land, Atmosphere Near real-time Capability for Earth observations | https://www.earthdata.nasa.gov/data/projects/lance |
 
 ## Space Agency Partner & Other Data (Link Text → Link URL)
 

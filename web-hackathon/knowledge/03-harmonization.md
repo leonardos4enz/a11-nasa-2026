@@ -19,8 +19,8 @@ This is what fixed Sierra de Arteaga, a mountain range with large forest fires w
 around it.
 
 ## Uncertainty
-Months estimated from MODIS carry a low-high range (10th-90th percentile of past prediction errors). VIIRS months have
-no range. The timeline marks the "MODIS era" so users know which years are estimated.
+Months before April 2018 (MODIS, and S-NPP scaled to NOAA-20) carry a low-high range (10th-90th percentile of past
+prediction errors). NOAA-20 months (April 2018 on) are observed and have no range. The timeline marks the "MODIS era" so users know which years are estimated.
 
 ## Validation
 Each overlap year was hidden in turn, the factors were fitted on the other years, and the hidden year was predicted

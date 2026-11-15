@@ -3,7 +3,7 @@
 ## What it is
 FireCast is the team's forecast model. It estimates, for each 0.25° grid cell, the probability of at least one VIIRS
 hotspot in the next 72 hours. It is a LightGBM model trained on the NOAA-20 detection history and runs on the team
-server every day after the new data arrive.
+server, refreshed every 3 hours from the latest FIRMS NOAA-20 near-real-time detections.
 
 ## Where it appears
 A dashed block after the current month on the timeline shows the chance of any hotspot in the area in the next

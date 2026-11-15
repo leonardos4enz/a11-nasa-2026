@@ -9,13 +9,13 @@ smoke or tree canopy can hide fires. Hotspot counts are an index of burning acti
 ## MODIS
 MODIS flies on Terra (morning and evening overpasses, since 2000) and Aqua (afternoon and night, since mid-2002). Its
 fire pixels are about 1 km at nadir. MODIS is the long record that makes 25-year baselines possible, but Terra's
-orbit has been drifting, which changes its overpass time; Ember Atlas stops calibrating MODIS against VIIRS after
+and Aqua's orbits have been drifting, which changes their overpass times; Ember Atlas stops calibrating MODIS against VIIRS after
 2023 for that reason.
 
 ## VIIRS
 VIIRS flies on Suomi NPP (2012 until it stopped delivering data on 2 November 2026), NOAA-20 (since 2018) and NOAA-21
 (since 2023). Its 375 m fire product sees smaller fires and splits large fires into more pixels. On Mexico 2019-2024
-NOAA-20 recorded about 4.2 times more hotspots than MODIS Terra+Aqua, yet the monthly series of both sensors correlate
+NOAA-20 recorded about 4.3 times more hotspots than MODIS Terra+Aqua, yet the monthly series of both sensors correlate
 at r = 0.995: the timing of the fire season is the same, the difference is mostly scale. The ratio changes with the
 month (from about 3.2x to 5.9x), so a single global factor is not enough.
 

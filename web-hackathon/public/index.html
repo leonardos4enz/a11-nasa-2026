@@ -1403,6 +1403,8 @@ document.addEventListener('pointermove',e=>{if(tip.style.display==='block'){tip.
 window.A11Context=()=>{if(!area)return null;const v=val(area,sel.y,sel.m),b=base(area,sel.y,sel.m),c=classify(v,b);
   return{area:area.name,kind:area.kind,period:`${FULL[sel.m]} ${sel.y}`,count:v,partial:isPartial(sel.y,sel.m),category:CATS[c.k].l,typical:Math.round(c.med),
     synthetic:H.synthetic||area.synthetic===true,provisional:H.provisional,
+    measured_by:(area.src[sel.y]?.[sel.m]||'VIIRS')!=='VIIRS'?'MODIS, calibrated to the VIIRS NOAA-20 scale':sel.y*12+sel.m<2018*12+3?'VIIRS S-NPP, scaled to NOAA-20':'VIIRS NOAA-20, observed',
+    ...(v!=null&&(lo(area,sel.y,sel.m)!==v||hi(area,sel.y,sel.m)!==v)?{estimate_low:lo(area,sel.y,sel.m),estimate_high:hi(area,sel.y,sel.m)}:{}),
     forecast_72h:FC&&!FC.error?{chance_any_hotspot:Math.round(FC.pAny*100)/100,riskiest_cell:Math.round(FC.pMax*100)/100,
       risk_level_riskiest_cell:FC.level,window:`${FC.meta.valid_from} to ${FC.meta.valid_to}`,based_on_data_through:FC.meta.issue_date}:null}};
 const announce=()=>window.dispatchEvent(new Event('a11:context'));

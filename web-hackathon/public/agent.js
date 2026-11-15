@@ -167,7 +167,8 @@
         const v = val(area, y, m);
         if (v == null) return { month: name, future: true };
         const c = classify(v, base(area, y, m));
-        return { month: name, count: v, category: CATS[c.k].l, typical: Math.round(c.med), ...(isPartial(y, m) ? { partial: true } : {}) };
+        const l = lo(area, y, m), h = hi(area, y, m);
+        return { month: name, count: v, ...(l !== v || h !== v ? { estimate_low: l, estimate_high: h } : {}), category: CATS[c.k].l, typical: Math.round(c.med), ...(isPartial(y, m) ? { partial: true } : {}) };
       });
       const typ = typeof typical === "function" ? typical() : [];
       const peak = typ.map((t, m) => ({ month: MONTHS[m], typical: t })).sort((a, b) => b.typical - a.typical).slice(0, 3);

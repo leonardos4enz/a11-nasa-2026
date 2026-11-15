@@ -1290,8 +1290,9 @@ $('hotcsv').onclick=async()=>{
 // SVG charts to PNG: CSS variables and text styles are resolved into the SVG so it renders the same outside the page.
 function svgToImage(svg){return new Promise((res,rej)=>{const {W,H}=svgSize(svg);
   let x=new XMLSerializer().serializeToString(svg).replace(/var\((--[\w-]+)\)/g,(_,v)=>css(v)).replace(/ data-tip="[^"]*"/g,'');
-  x=x.replace(/^<svg/,`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"`).replace(/(<svg[^>]*>)/,`$1<style>text{fill:${css('--text-3')};font:12px Inter,system-ui,sans-serif}</style>`);
-  const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(x)})}
+  // XMLSerializer usually adds xmlns already; a second one is a parse error in Chrome ("Attribute xmlns redefined").
+  x=x.replace(/^<svg/,`<svg${/^<svg[^>]*\sxmlns=/.test(x)?'':' xmlns="http://www.w3.org/2000/svg"'} width="${W}" height="${H}"`).replace(/(<svg[^>]*>)/,`$1<style>text{fill:${css('--text-3')};font:12px Inter,system-ui,sans-serif}</style>`);
+  const img=new Image();img.onload=()=>res(img);img.onerror=()=>rej(new Error(`the ${svg.id||'chart'} image did not load`));img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(x)})}
 function canvasOf(W,H){const c=document.createElement('canvas'),k=2;c.width=W*k;c.height=H*k;const g=c.getContext('2d');g.scale(k,k);g.fillStyle=css('--surface');g.fillRect(0,0,W,H);return{c,g}}
 const FONT=w=>`${w} Inter,system-ui,sans-serif`;
 function footer(g,W,H){g.fillStyle=css('--text-3');g.font=FONT('400 11px');g.textAlign='left';

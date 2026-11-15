@@ -1513,7 +1513,8 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>{if(
   catch(err){console.error('Harmonized data failed to load',err);
     $('hero').innerHTML=`<div class="alert">${icon('i-alert',18)}<span>Could not load the harmonized data. Try reloading the page.</span></div>`;return}
   Y0=H.firstYear;Y1=H.baselineLast;CY=H.currentYear;NOW_M=H.currentMonth;NOW_D=H.currentDay;ERA_END=H.eraEnd;TOTAL=idx(CY,NOW_M)+1;
-  AREAS=H.areas;area=AREAS[0];
+  // Open on an area with plenty of fire (Ocosingo, Chiapas); fall back to the first one if it is missing.
+  AREAS=H.areas;area=AREAS.find(a=>a.id==='ocos')||AREAS[0];
   // Open on the busiest month of the current year so far.
   sel=defaultMonth();
   const pill=$('dataPill');

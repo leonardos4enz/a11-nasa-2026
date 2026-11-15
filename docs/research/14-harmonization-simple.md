@@ -14,7 +14,7 @@ enough to explain in five steps, as in the team presentation "Armonización MODI
 |---|---|---|
 | 1. Divide | VIIRS ÷ Aqua per month, Mexico | Same filters for both: SP, `fire_type = 0`, confidence nominal/high |
 | 2. Median | Median of the yearly ratios, 2012-02..2021-12 | 2022 on is left out (MODIS orbit drift). January 2012 is partial for S-NPP, so January uses 2013-2021 |
-| 3. Per month | 12 factors k (`harmonization_k`, link `AQUA`) | Interquartile range of the yearly ratios kept as `k_q25` / `k_q75` |
+| 3. Per month | 12 factors k (`harmonization_k`, link `AQUA`) | 10th-90th percentile of the yearly ratios kept as `k_p10` / `k_p90` |
 | 4. Translate | 2002-07..2012-01: Aqua × k | Before 2002-07 (Terra only): Terra × k<sub>T</sub> × k, k<sub>T</sub> = median Aqua ÷ Terra per month, 2003-2011 (link `TERRA`) |
 | 5. Compare | Each month vs its historical median | Unchanged (`harmonized_*_json` in `schema.sql`) |
 
@@ -26,7 +26,7 @@ never added up, because a new launch would create a false jump.
 |---|---|---|---|
 | 2018-04 → now | NOAA-20 | `VIIRS` | = count |
 | 2012-02 → 2018-03 | S-NPP | `VIIRS` | = count |
-| 2002-07 → 2012-01 | Aqua × k[m] | `MODIS_calibrated` | Aqua × k_q25[m] … Aqua × k_q75[m] |
+| 2002-07 → 2012-01 | Aqua × k[m] | `MODIS_calibrated` | Aqua × k_p10[m] … Aqua × k_p90[m] |
 | 2001-01 → 2002-06 | Terra × k<sub>T</sub>[m] × k[m] | `MODIS_calibrated` | both quartiles multiplied |
 
 Polygons with no S-NPP detections in 2012-02..2018-03 (the US backfill does not download S-NPP) use Aqua × k until
@@ -42,7 +42,7 @@ refineries.
 `SELECT harmonization_validation_json();` repeats the presentation's test on the database with the app's filters:
 each year of 2012-2021 is hidden, k is recomputed with the other years, the hidden year is predicted from Aqua and
 compared with VIIRS. It returns the monthly WAPE, the median monthly and yearly errors, the error of each year, the
-share of months whose true value falls inside the IQR band, and the twelve factors.
+share of months whose true value falls inside the 10-90 % band, and the twelve factors.
 
 Results on a11-db (applied 2026-11-15, nominal/high confidence), next to the presentation's study (all confidence
 levels, `web/explorer/data/mexico_monthly.json`):
@@ -53,7 +53,7 @@ levels, `web/explorer/data/mexico_monthly.json`):
 | Worst year | 2015, +11.6 % | 2015, +11.5 % |
 | Single month, median error | **6.5 %** | 6.5 % |
 | Monthly WAPE | 7.2 % | — |
-| True month inside the IQR band | 41 % | — |
+| True month inside the 10-90 % band | 66 % (41 % with the earlier IQR band) | — |
 
 Error by year (a11-db): 2012 −8.7 %, 2013 +2.8 %, 2014 +6.9 %, 2015 +11.6 %, 2016 +0.8 %, 2017 −4.7 %,
 2018 −5.3 %, 2019 +0.7 %, 2020 +5.5 %, 2021 −3.3 %.
@@ -62,8 +62,11 @@ Factors k (VIIRS ÷ Aqua) by month, Jan → Dec: 5.82, 6.28, 6.35, 6.45, 7.56, 9
 (the presentation, with all confidence levels, had 5.92 … 10.72). Aqua ÷ Terra: 1.65, 1.50, 1.46, 1.20, 1.14, 1.16,
 1.14, 1.20, 1.08, 1.13, 1.38, 1.54.
 
-The IQR band is narrow by construction (middle half of the years), so it holds the true month only 41 % of the time;
-it says "most likely", not "guaranteed". v2's 10-90 % range from the errors held 80-84 %.
+The band is the 10th-90th percentile of the yearly ratios (changed from the interquartile range, which held the true
+month only 41 % of the time). It now holds it 66 % of the time, less than the nominal 80 % because the spread of the
+national yearly ratios does not include the extra noise of a single month; it says "most likely", not "guaranteed".
+v2's 10-90 % range, built from the prediction errors themselves, held 80-84 %. May, for example: k = 7.56,
+band 7.28-8.22.
 
 ## 3. What was removed (and why it is still documented)
 

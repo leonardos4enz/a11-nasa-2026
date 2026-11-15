@@ -541,13 +541,13 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
             <tr><td>Single month, typical (median)</td><td>6.5%</td></tr>
             <tr><td>Quiet months (a few hundred hotspots)</td><td>can be off by 2×</td></tr>
           </table>
-          <div class="foot">National monthly counts of Mexico, nominal/high confidence; each year is hidden from the calibration and predicted from Aqua. The low–high band (middle half of the years) held the true month 41% of the time. Small areas are noisier than the country: read their low–high range. Details: <a href="https://github.com/leonardos4enz/a11-nasa-2026/blob/main/docs/research/14-harmonization-simple.md" target="_blank" rel="noopener">harmonization method</a>.</div>
+          <div class="foot">National monthly counts of Mexico, nominal/high confidence; each year is hidden from the calibration and predicted from Aqua. The low–high band (10th–90th percentile of the yearly ratios) held the true month 66% of the time. Small areas are noisier than the country: read their low–high range. Details: <a href="https://github.com/leonardos4enz/a11-nasa-2026/blob/main/docs/research/14-harmonization-simple.md" target="_blank" rel="noopener">harmonization method</a>.</div>
         </div>
         <div class="sect notes">
           <h4>How the record is harmonized</h4>
           <p id="mMethod"></p>
           <p><b>Why a ratio.</b> VIIRS (375 m) sees smaller fires than MODIS (1 km), so it reports several times more hotspots for the same fires, but both follow the same season. One factor per calendar month (VIIRS ÷ Aqua, median of 2012–2021) puts 25 years on the VIIRS scale.</p>
-          <p><b>Uncertainty.</b> MODIS-era months (before 2012-02) carry a low–high range: the interquartile range of the yearly VIIRS ÷ Aqua ratios for that month. VIIRS months are observed and have no range.</p>
+          <p><b>Uncertainty.</b> MODIS-era months (before 2012-02) carry a low–high range: the 10th–90th percentile of the yearly VIIRS ÷ Aqua ratios for that month. VIIRS months are observed and have no range.</p>
           <p><b>Limitations.</b> The factors are national (Mexico) and apply everywhere, so a small area whose fires differ from the country average can be off. The United States has no S-NPP data here, so its record is Aqua × k through 2018-03.</p>
         </div>
       </section>

@@ -24,7 +24,7 @@ would return (month counts, first/last month, yearly totals per area).
 "A11 DB setup". The server and the page do not change.
 
 **Method used by the app:** apply `analysis/db/harmonization.sql` after `schema.sql` — one factor k per calendar
-month (VIIRS ÷ Aqua, median 2012-2021), MODIS-era `low`/`high` = interquartile range of the yearly ratios, NRT
+month (VIIRS ÷ Aqua, median 2012-2021), MODIS-era `low`/`high` = 10th-90th percentile of the yearly ratios, NRT
 static sources removed. See `docs/research/14-harmonization-simple.md`.
 
 **Regional v2 method (improved, not implemented):** `analysis/db/harmonization_v2.sql` — regional, seasonal

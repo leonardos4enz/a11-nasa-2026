@@ -128,7 +128,7 @@ flowchart RL
 ```
 
 1. **Divide** VIIRS ÷ Aqua for each month in Mexico (Aqua passes at 13:30, like VIIRS).
-2. **Median** over 2012–2021, before the MODIS orbit drift; the interquartile range is the uncertainty band.
+2. **Median** over 2012–2021, before the MODIS orbit drift; the 10th–90th percentile of the ratios is the uncertainty band.
 3. **Twelve factors k**, one per calendar month (about ×9.7 in June, ×5.7 in December).
 4. **Translate** the MODIS years: Aqua × k (Terra × k_T × k before Aqua flew). From 2012-02 VIIRS is used as observed.
 5. **Compare** each month with its historical median: that colours the calendar.

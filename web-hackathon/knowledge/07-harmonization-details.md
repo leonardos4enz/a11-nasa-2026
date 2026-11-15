@@ -7,7 +7,7 @@ months before February 2012 are MODIS estimates and carry a low-high range, whil
 VIIRS counts as observed. When citing an older month, give the range too.
 
 ## How to read the low-high range
-Every MODIS-era month has a low-high range: the interquartile range (middle half) of the yearly VIIRS/Aqua ratios for
+Every MODIS-era month has a low-high range: the 10th to 90th percentile of the yearly VIIRS/Aqua ratios for
 that calendar month in 2012-2021. Say "about N, most likely between low and high". For January 2001 to June 2002 the
 range is wider, because it combines the Terra-to-Aqua factor and the Aqua-to-VIIRS factor.
 

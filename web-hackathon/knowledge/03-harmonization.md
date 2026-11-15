@@ -23,7 +23,7 @@ because adding a newly launched satellite creates a false jump.
 1. Divide: for each month, VIIRS hotspots divided by Aqua hotspots over Mexico, with exactly the same filters
    (Standard Processing, vegetation fires, nominal/high confidence).
 2. Median: repeat for every year of the clean overlap, 2012-2021, and take the median. 2022 on is left out because
-   the MODIS orbits drift. The middle half of the years (interquartile range) is the uncertainty.
+   the MODIS orbits drift. The range where 80% of the years fall (10th to 90th percentile) is the uncertainty.
 3. Per month: twelve factors k, one per calendar month, because the gap changes with the season (June needs about
    ×9.7 and December about ×5.7 in the database).
 4. Translate: July 2002 to January 2012 = Aqua × k. Before July 2002 only Terra flew: Terra × an Aqua/Terra factor
@@ -31,10 +31,11 @@ because adding a newly launched satellite creates a false jump.
 5. Compare: each month against the median of the same calendar month in past years, which colours the calendar.
 
 ## Uncertainty
-MODIS-era months (before February 2012) carry a low-high range: the interquartile range of the yearly VIIRS/Aqua
+MODIS-era months (before February 2012) carry a low-high range: the 10th to 90th percentile of the yearly VIIRS/Aqua
 ratios for that calendar month. VIIRS months are observed and have no range. The timeline marks the "MODIS era" so
-users know which years are estimated. The range is narrow on purpose (middle half of the years): in validation
-the true month fell inside it 41% of the time, so treat it as "most likely", not as a guaranteed bound.
+users know which years are estimated. In validation (each year hidden and predicted)
+the true month fell inside it 66% of the time: treat it as "most likely", not as a guaranteed bound. Quiet months
+with few hotspots can fall outside it.
 
 ## Validation
 Each year of 2012-2021 was hidden in turn, k was computed with the other nine years, and the hidden year was

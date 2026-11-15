@@ -56,7 +56,7 @@ reference satellite per sensor so a new launch never creates a jump. On the MODI
 13:30 like VIIRS. Five steps: divide VIIRS by Aqua for each month in Mexico; take the median over 2012–2021, before the
 MODIS orbit drift; keep twelve factors, one per calendar month, because the gap changes with the season; translate
 2002–2011 as Aqua × k (Terra-only months first go to the Aqua scale with their own factor); and compare each month with
-its historical median. The interquartile range of the yearly ratios is the uncertainty band. All sensors use the same
+its historical median. The 10th–90th percentile of the yearly ratios is the uncertainty band. All sensors use the same
 filters (vegetation fires, nominal/high confidence); gas flares and volcanoes are removed from the near-real-time feed
 (95.6% of static detections removed, 1.5% of vegetation fires lost, tested out of sample). Validation by
 leave-one-year-out: 5.0% typical error on the yearly total for Mexico (worst year +11.6%), and r = 0.83 monthly against

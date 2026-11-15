@@ -781,7 +781,7 @@ function renderPick(){
       h+=`<li class="opt${i===pickAct?' act':''}" role="option" id="po-${i}" data-i="${i}" aria-selected="${on}">
         <span class="cc ${c}">${c==='other'?'··':c.toUpperCase()}</span>
         <span class="t"><b>${a.name}</b><small>${kindLabel(a)}</small></span>
-        <span class="n">${fmtK(perYear(a))}<small>hotspots / yr</small></span>
+        <span class="n">${fmtK(perYear(a))}<small>typical yr</small></span>
         ${on?'<svg class="i ck"><use href="#i-check"/></svg>':'<span style="width:16px"></span>'}</li>`})}
   $('pickList').innerHTML=h||`<li class="empty">No areas match${q?` “${q.replace(/[<&]/g,'')}”`:''}. Draw one or use a point below.</li>`;
   $('pickQ').setAttribute('aria-activedescendant',pickAct>=0?`po-${pickAct}`:'')}
@@ -789,7 +789,9 @@ function placePick(){const r=$('pickBtn').getBoundingClientRect(),w=Math.min(400
   Object.assign($('pickPop').style,{left:`${Math.max(8,Math.min(r.left,innerWidth-w-8))}px`,top:`${r.bottom+6}px`})}
 function openPick(open){$('pickPop').hidden=!open;$('pickBtn').setAttribute('aria-expanded',open);
   if(open){pickAct=-1;$('pickQ').value='';placePick();renderPick();$('pickQ').focus();$('pickList').querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'})}}
-function chooseArea(a){openPick(false);if(a&&a!==area){area=a;fillAreas();renderAll(true)}$('pickBtn').focus()}
+// Keeps the selected month across areas (to compare them), unless it would be empty in the new area.
+function chooseArea(a){openPick(false);if(a&&a!==area){area=a;fillAreas();
+  if(quiet(area,sel.y,sel.m)){sel=defaultMonth();setView(idx(sel.y,sel.m))}renderAll(true)}$('pickBtn').focus()}
 $('pickBtn').onclick=()=>openPick($('pickPop').hidden);
 $('pickQ').oninput=()=>{pickAct=pickItems.length?0:-1;renderPick();pickAct=pickItems.length?0:-1;renderPick()};
 $('pickList').onclick=e=>{const li=e.target.closest('.opt');if(li)chooseArea(pickItems[+li.dataset.i])};
@@ -1489,7 +1491,14 @@ window.A11Context=()=>{if(!area)return null;const v=val(area,sel.y,sel.m),b=base
       risk_level_riskiest_cell:FC.level,window:`${FC.meta.valid_from} to ${FC.meta.valid_to}`,based_on_data_through:FC.meta.issue_date}:null}};
 const announce=()=>window.dispatchEvent(new Event('a11:context'));
 // Reset button on the timeline: every selection back to how the page opens, for the area on screen.
-function defaultMonth(){const cy=MONTHS.map((_,m)=>m<=NOW_M?val(area,CY,m):-1);return{y:CY,m:cy.indexOf(Math.max(...cy))}}
+// True when a month has too few fires to say anything (the hero would read "Too few fires to judge").
+const quiet=(a,y,m)=>{const v=val(a,y,m);return!(v>0)||classify(v,base(a,y,m)).k==='low'};
+// Busiest month of the current year; if even that is too quiet to judge, the area's record month instead,
+// so an area like Sierra de Arteaga (2 hotspots so far in 2026) opens on 2011 rather than on an empty map.
+function defaultMonth(){const cy=MONTHS.map((_,m)=>m<=NOW_M?val(area,CY,m):-1),m=cy.indexOf(Math.max(...cy));
+  if(!quiet(area,CY,m))return{y:CY,m};
+  let best=null;for(let y=Y0;y<=CY;y++)for(let mm=0;mm<12;mm++){if(isFuture(y,mm))continue;const v=val(area,y,mm);if(v!=null&&(!best||v>=best.v))best={y,m:mm,v}}
+  return best&&best.v>0?{y:best.y,m:best.m}:{y:CY,m}}
 function resetSelections(){if(!area)return;
   if(playing){clearInterval(playing);playing=null;$('play').innerHTML=icon('i-play',16)}
   sel=defaultMonth();zoomI=0;setView(0);

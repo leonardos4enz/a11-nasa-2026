@@ -165,22 +165,20 @@ FireCast runs as its own service; the site reaches it through the `/api/forecast
 
 ## Ember: an assistant that uses the page
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant P as Page (agent.js)
-  participant S as server.js
-  participant A as Ember agent
-  participant D as Postgres
-  U->>P: "Is March unusual here?"
-  P->>S: POST /api/chat (message + what is on screen)
-  S->>A: run turn
-  A->>D: memory (chat_messages) · search_docs (rag_chunks)
-  A-->>P: page actions (select area, set month, open tab…)
-  P->>P: plays them with the Ember cursor
-  P->>S: tool results
-  A-->>U: answer with numbers from the page only
-```
+<p align="center">
+  <img src="docs/readme/ember-moods.svg" alt="Ember, the assistant, in seven moods: ready, reading, thinking, working, found it, failed and napping" width="100%">
+</p>
+
+Ember is a small flame with an expression engine ([ember.js](web-hackathon/public/ember.js), no dependencies). Its
+mood mirrors the conversation; the animations above are recorded from the real engine.
+
+<p align="center">
+  <img src="docs/readme/agent-loop.svg" alt="How Ember answers: you ask; the server loads memory and builds the prompt; the model decides; it searches the documents on the server or uses page tools in your browser, looping back to the model; a grounding check; the answer" width="100%">
+</p>
+
+The agent harness ([chat-agent.js](web-hackathon/chat-agent.js)) runs on the server. Server tools run there and loop
+straight back to the model; page tools are sent to the browser, where [agent.js](web-hackathon/public/agent.js) plays
+them with a visible cursor and posts the results back, so the model can continue.
 
 - **13 page tools** (search an area, set the month, layers, hotspot filter, area around a point, downloads…) plus
   **document search** over [web-hackathon/knowledge/](web-hackathon/knowledge/).

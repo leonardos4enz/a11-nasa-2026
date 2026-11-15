@@ -1,10 +1,10 @@
-"""Extrae de a11-db (solo lectura) los conteos mensuales que usa la armonización.
+"""Extracts from a11-db (read-only) the monthly counts used by the harmonization.
 
-    python analysis/harmonization/pull.py            (DATABASE_URL en .env o en el entorno)
+    python analysis/harmonization/pull.py            (DATABASE_URL in .env or in the environment)
 
-Salida (data/harmonization/, git-ignored):
-  cells.parquet  conteo por celda de 1°, mes y satélite (SP, vegetación, confianza n/h)
-  areas.parquet  igual, pero solo dentro de cada polígono de la tabla `areas`
+Output (data/harmonization/, git-ignored):
+  cells.parquet  count per 1° cell, month and satellite (SP, vegetation, confidence n/h)
+  areas.parquet  same, but only inside each polygon of the `areas` table
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from dotenv import find_dotenv, load_dotenv
 
 OUT = Path(__file__).resolve().parents[2] / "data" / "harmonization"
 
-# Mismos filtros para todos los sensores: Standard Processing, incendio de vegetación, sin confianza baja.
+# Same filters for all sensors: Standard Processing, vegetation fire, no low confidence.
 FILTER = "h.processing = 'SP' AND h.fire_type = 0 AND h.conf_class <> 'l'"
 
 Q_CELLS = f"""
@@ -46,7 +46,7 @@ def main() -> None:
             df = pd.DataFrame(cur.fetchall(), columns=[d.name for d in cur.description])
             df["month"] = pd.to_datetime(df["month"])
             df.to_parquet(OUT / f"{name}.parquet", index=False)
-            print(f"{name}: {len(df):,} filas, {int(df['n'].sum()):,} hotspots")
+            print(f"{name}: {len(df):,} rows, {int(df['n'].sum()):,} hotspots")
 
 
 if __name__ == "__main__":

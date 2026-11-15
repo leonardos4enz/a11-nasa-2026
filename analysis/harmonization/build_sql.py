@@ -1,9 +1,9 @@
-"""Genera analysis/db/harmonization_v2.sql a partir de los factores de calibrate.py.
+"""Generates analysis/db/harmonization_v2.sql from the calibrate.py factors.
 
     python analysis/harmonization/build_sql.py
 
-El SQL es idempotente y reemplaza el harmonize_polygon() provisional sin cambiar su firma
-(contrato: web-hackathon/DATA_CONTRACT.md), así que el servidor y la página no cambian.
+The SQL is idempotent and replaces the provisional harmonize_polygon() without changing its signature
+(contract: web-hackathon/DATA_CONTRACT.md), so the server and the page do not change.
 """
 from __future__ import annotations
 
@@ -28,13 +28,13 @@ METHOD = ("Reference VIIRS NOAA-20 (2018-04 on). 2012-02..2018-03: S-NPP x NOAA-
 
 
 def body(S: str) -> str:
-    """S = prefijo de esquema para objetos creados aquí ('' en producción, 'pg_temp.' para probar)."""
+    """S = schema prefix for objects created here ('' in production, 'pg_temp.' for testing)."""
     return f"""
--- Fuentes estáticas (volcanes, industria, plataformas) en una malla de 0.01° (~1 km), sacadas de las filas
--- SP que sí traen fire_type: celdas con >= 3 detecciones estáticas que además son >= 50 % de sus detecciones.
--- Las filas NRT no traen fire_type: se descartan si caen en una de esas celdas o en una vecina.
--- Validado fuera de muestra (sitios con SP <= 2024, prueba con NOAA-20 2025): quita el 95.6 % de las detecciones
--- estáticas y solo el 1.5 % de las de vegetación.
+-- Static sources (volcanoes, industry, platforms) on a 0.01° (~1 km) grid, derived from the
+-- SP rows that do carry fire_type: cells with >= 3 static detections that are also >= 50 % of their detections.
+-- NRT rows carry no fire_type: they are dropped if they fall in one of those cells or a neighbouring one.
+-- Validated out of sample (sites from SP <= 2024, tested on NOAA-20 2025): removes 95.6 % of the static
+-- detections and only 1.5 % of the vegetation ones.
 CREATE TABLE IF NOT EXISTS {S}static_sites (fy int NOT NULL, fx int NOT NULL, PRIMARY KEY (fy, fx));
 
 CREATE OR REPLACE FUNCTION {S}refresh_static_sites() RETURNS bigint LANGUAGE sql AS $$
@@ -54,7 +54,7 @@ CREATE OR REPLACE FUNCTION {S}is_static_site(p_lat real, p_lon real) RETURNS boo
                      AND s.fx BETWEEN floor(p_lon / 0.01)::int - 1 AND floor(p_lon / 0.01)::int + 1);
 $$;
 
--- Conteos por celda de 1°, mes y satélite dentro de un polígono, con los filtros de la armonización.
+-- Counts per 1° cell, month and satellite inside a polygon, with the harmonization filters.
 CREATE OR REPLACE FUNCTION {S}polygon_monthly_cells(p_geom geometry)
 RETURNS TABLE (ry int, rx int, month date, satellite text, n bigint) LANGUAGE sql STABLE AS $$
     SELECT floor(h.latitude)::int, floor(h.longitude)::int, date_trunc('month', h.acq_date)::date, h.satellite, count(*)
@@ -65,12 +65,12 @@ RETURNS TABLE (ry int, rx int, month date, satellite text, n bigint) LANGUAGE sq
     GROUP BY 1, 2, 3, 4;
 $$;
 
--- >>> HARMONIZATION STEP (v2). Misma firma que la versión provisional.
+-- >>> HARMONIZATION STEP (v2). Same signature as the provisional version.
 CREATE OR REPLACE FUNCTION {S}harmonize_polygon(p_geom geometry)
 RETURNS TABLE (month date, count integer, low integer, high integer, source text) LANGUAGE sql STABLE AS $$
     WITH last AS (SELECT max(acq_date) AS d FROM hotspots),
     raw AS (SELECT * FROM {S}polygon_monthly_cells(p_geom)),
-    cm AS (   -- celda-mes, con los factores de la celda (o el nacional del mes si la celda no tiene)
+    cm AS (   -- cell-month, with the cell's factors (or the national month factor if the cell has none)
         SELECT r.month, r.ry, r.rx, extract(month FROM r.month)::int AS m,
                sum(r.n) FILTER (WHERE r.satellite = 'NOAA20')          AS n20,
                sum(r.n) FILTER (WHERE r.satellite = 'SNPP')            AS snpp,
@@ -89,16 +89,16 @@ RETURNS TABLE (month date, count integer, low integer, high integer, source text
         LEFT JOIN {S}harmonization_factors fs ON fs.link = 'SNPP' AND fs.ry = cm.ry AND fs.rx = cm.rx AND fs.m = cm.m
         LEFT JOIN {S}harmonization_factors ns ON ns.link = 'SNPP' AND ns.ry = -999 AND ns.m = cm.m
     ),
-    pm AS (   -- polígono-mes: conteos reales y predicciones regionales de cada eslabón
+    pm AS (   -- polygon-month: real counts and regional predictions for each link
         SELECT month, max(m) AS m,
                coalesce(sum(n20), 0) AS n20, coalesce(sum(snpp), 0) AS snpp,
-               coalesce(sum(k_modis * modis), 0) AS p_modis,   -- MODIS en unidades S-NPP
-               coalesce(sum(k_terra * terra), 0) AS p_terra,   -- Terra en unidades S-NPP
-               coalesce(sum(k_snpp * snpp), 0)  AS p_snpp      -- S-NPP en unidades NOAA-20
+               coalesce(sum(k_modis * modis), 0) AS p_modis,   -- MODIS in S-NPP units
+               coalesce(sum(k_terra * terra), 0) AS p_terra,   -- Terra in S-NPP units
+               coalesce(sum(k_snpp * snpp), 0)  AS p_snpp      -- S-NPP in NOAA-20 units
         FROM cmk GROUP BY month
     ),
     par AS (SELECT link, beta, overlap_from, overlap_to FROM {S}harmonization_params),
-    corr AS (   -- corrección local del polígono, encogida hacia 1 con beta
+    corr AS (   -- local polygon correction, shrunk toward 1 with beta
         SELECT
           (SELECT (sum(pm.snpp) + p.beta) / (sum(pm.p_modis) + p.beta) FROM pm, par p
             WHERE p.link = 'MODIS' AND pm.month BETWEEN p.overlap_from AND p.overlap_to GROUP BY p.beta) AS c_modis,
@@ -106,8 +106,8 @@ RETURNS TABLE (month date, count integer, low integer, high integer, source text
             WHERE p.link = 'TERRA' AND pm.month BETWEEN p.overlap_from AND p.overlap_to GROUP BY p.beta) AS c_terra,
           (SELECT (sum(pm.n20) + p.beta) / (sum(pm.p_snpp) + p.beta) FROM pm, par p
             WHERE p.link = 'SNPP' AND pm.month BETWEEN p.overlap_from AND p.overlap_to GROUP BY p.beta) AS c_snpp,
-          -- Respaldo sin S-NPP (EE. UU.: el backfill no lo descarga). MODIS/Terra -> NOAA-20 directo:
-          -- k regional a S-NPP x k nacional S-NPP->NOAA-20, corregido en el polígono contra NOAA-20 (2018-04..2025-12).
+          -- Fallback without S-NPP (US: the backfill does not download it). MODIS/Terra -> NOAA-20 directly:
+          -- regional k to S-NPP x national k S-NPP->NOAA-20, corrected in the polygon against NOAA-20 (2018-04..2025-12).
           (SELECT (sum(pm.n20) + p.beta) / (sum(ns.k * pm.p_modis) + p.beta) FROM pm, par p, par q,
                   {S}harmonization_factors ns
             WHERE p.link = 'MODIS' AND q.link = 'SNPP' AND ns.link = 'SNPP' AND ns.ry = -999 AND ns.m = pm.m
@@ -116,7 +116,7 @@ RETURNS TABLE (month date, count integer, low integer, high integer, source text
                   {S}harmonization_factors ns
             WHERE p.link = 'TERRA' AND q.link = 'SNPP' AND ns.link = 'SNPP' AND ns.ry = -999 AND ns.m = pm.m
               AND pm.month BETWEEN q.overlap_from AND q.overlap_to GROUP BY p.beta) AS c_terra_n20,
-          -- ¿El polígono tiene S-NPP en sus traslapes (2012-02..2025-12)? Si no, se usa el respaldo.
+          -- Does the polygon have S-NPP in its overlaps (2012-02..2025-12)? If not, the fallback is used.
           coalesce((SELECT sum(pm.snpp) > 0 FROM pm, par a, par b
                      WHERE a.link = 'MODIS' AND b.link = 'SNPP' AND pm.month BETWEEN a.overlap_from AND b.overlap_to),
                    false) AS has_snpp
@@ -170,13 +170,13 @@ def main() -> None:
     tables = """
 CREATE TABLE IF NOT EXISTS {S}harmonization_factors (
     link text NOT NULL,      -- 'SNPP' (S-NPP -> NOAA-20), 'MODIS' (Terra+Aqua -> S-NPP), 'TERRA' (Terra -> S-NPP)
-    ry   int  NOT NULL,      -- floor(latitude)  de la celda de 1°; -999 = factor nacional del mes
-    rx   int  NOT NULL,      -- floor(longitude) de la celda de 1°; -999 = factor nacional del mes
-    m    smallint NOT NULL,  -- mes del calendario 1-12
+    ry   int  NOT NULL,      -- floor(latitude)  of the 1° cell; -999 = national month factor
+    rx   int  NOT NULL,      -- floor(longitude) of the 1° cell; -999 = national month factor
+    m    smallint NOT NULL,  -- calendar month 1-12
     k    float8 NOT NULL,
     PRIMARY KEY (link, ry, rx, m)
 );
-CREATE TABLE IF NOT EXISTS {S}harmonization_bins (   -- rango 10-90 % según el tamaño de la estimación
+CREATE TABLE IF NOT EXISTS {S}harmonization_bins (   -- 10-90 % range by estimate size
     link text NOT NULL, pred_min float8 NOT NULL, pred_max float8 NOT NULL, q_lo float8 NOT NULL, q_hi float8 NOT NULL,
     PRIMARY KEY (link, pred_min)
 );
@@ -229,10 +229,10 @@ COMMIT;
 """
     sql = header + tables.replace("{S}", "") + body("") + index_fn
     OUT.write_text(sql, encoding="utf-8")
-    # Variante para probar en una sesión temporal (todo en pg_temp, sin tocar el esquema public).
+    # Variant for testing in a temporary session (everything in pg_temp, the public schema is untouched).
     test = tables.replace("{S}", "pg_temp.") + body("pg_temp.") + "SELECT pg_temp.refresh_static_sites();\n"
     (DATA / "harmonization_v2_test.sql").write_text(test, encoding="utf-8")
-    print(f"OK {OUT} ({OUT.stat().st_size/1024:.0f} KB, {len(fac)} factores)")
+    print(f"OK {OUT} ({OUT.stat().st_size/1024:.0f} KB, {len(fac)} factors)")
 
 
 if __name__ == "__main__":

@@ -1,26 +1,26 @@
-"""Armonización MODIS / VIIRS: factores de calibración regionales y validación.
+"""MODIS / VIIRS harmonization: regional calibration factors and validation.
 
-    python analysis/harmonization/pull.py         # una vez: extrae los conteos de a11-db
-    python analysis/harmonization/calibrate.py    # factores + validación
+    python analysis/harmonization/pull.py         # once: extracts the counts from a11-db
+    python analysis/harmonization/calibrate.py    # factors + validation
 
-Referencia: VIIRS NOAA-20 (sus conteos se usan tal cual desde 2018-04).
+Reference: VIIRS NOAA-20 (its counts are used as-is from 2018-04).
 
-Cadena de calibración (cada eslabón se calibra con dos sensores REALES que se traslapan):
-    S-NPP  -> NOAA-20   k_s[celda, mes]   traslape 2018-04 .. 2025-12
-    MODIS  -> S-NPP     k_m[celda, mes]   traslape 2012-02 .. 2023-12   (Terra + Aqua)
-    Terra  -> S-NPP     k_t[celda, mes]   mismo traslape                (solo Terra: 2000-11 .. 2002-06)
-    => MODIS en unidades NOAA-20 = k_m * k_s ;  Terra = k_t * k_s
+Calibration chain (each link is calibrated with two REAL sensors that overlap):
+    S-NPP  -> NOAA-20   k_s[cell, month] overlap 2018-04 .. 2025-12
+    MODIS  -> S-NPP     k_m[cell, month] overlap 2012-02 .. 2023-12    (Terra + Aqua)
+    Terra  -> S-NPP     k_t[cell, month] same overlap                  (Terra only: 2000-11 .. 2002-06)
+    => MODIS in NOAA-20 units = k_m * k_s ;  Terra = k_t * k_s
 
-MODIS se calibra hasta 2023 porque desde 2024 la órbita de Terra se desvía (Aqua/Terra pasa de ~1.2 a 1.6).
+MODIS is calibrated only through 2023 because from 2024 Terra's orbit drifts (Aqua/Terra goes from ~1.2 to 1.6).
 
-Estimador con encogimiento jerárquico (para que las regiones con pocos fuegos no den factores ruidosos):
-    K_nac[m]     = ΣV / ΣM a nivel nacional para el mes del calendario m
-    K_c          = (ΣV_c + α·K_nac) / (ΣM_c + α)                  nivel de la celda, encogido al nacional
-    prior_c,m    = K_c · K_nac[m] / K_nac                         forma estacional nacional, nivel de la celda
-    K_c,m        = (ΣV_c,m + α·prior_c,m) / (ΣM_c,m + α)          factor final
-α se elige minimizando el error de validación dejando un año fuera.
+Estimator with hierarchical shrinkage (so regions with few fires do not produce noisy factors):
+    K_nac[m]     = ΣV / ΣM at national level for calendar month m
+    K_c          = (ΣV_c + α·K_nac) / (ΣM_c + α)                  cell level, shrunk to the national one
+    prior_c,m    = K_c · K_nac[m] / K_nac                         national seasonal shape, cell level
+    K_c,m        = (ΣV_c,m + α·prior_c,m) / (ΣM_c,m + α)          final factor
+α is chosen by minimizing the leave-one-year-out validation error.
 
-Salida en data/harmonization/: factors.parquet, bins.parquet, validation.json
+Output in data/harmonization/: factors.parquet, bins.parquet, validation.json
 """
 from __future__ import annotations
 
@@ -31,24 +31,24 @@ import numpy as np
 import pandas as pd
 
 DIR = Path(__file__).resolve().parents[2] / "data" / "harmonization"
-REGION_DEG = 1                       # tamaño de región (las celdas del pull son de 1°)
-ALPHAS = [0, 10, 30, 100, 300, 1000, None]   # None = solo factor nacional por mes
+REGION_DEG = 1                       # region size (the pull's cells are 1°)
+ALPHAS = [0, 10, 30, 100, 300, 1000, None]   # None = national factor per month only
 N20_START = pd.Timestamp("2018-04-01")
-SNPP_START = pd.Timestamp("2012-02-01")      # primer mes completo de S-NPP
+SNPP_START = pd.Timestamp("2012-02-01")      # first full month of S-NPP
 AQUA_START = pd.Timestamp("2002-07-01")
 LINKS = {
-    # nombre: (numerador, denominador, primer mes, último mes del traslape)
+    # name: (numerator, denominator, first month, last month of the overlap)
     "SNPP": ("NOAA20", "SNPP", "2018-04-01", "2025-12-01"),
     "MODIS": ("SNPP", "MODIS", "2012-02-01", "2023-12-01"),
     "TERRA": ("SNPP", "Terra", "2012-02-01", "2023-12-01"),
 }
 BIN_EDGES = [0, 1, 3, 10, 30, 100, 300, 1000, np.inf]
-# Corrección local del polígono: c = (ΣV_pol + β) / (Σpred_pol + β) en el traslape. β en detecciones del
-# sensor de referencia: un área con pocos fuegos queda con el factor regional; una con muchos, con el suyo.
+# Local polygon correction: c = (ΣV_pol + β) / (Σpred_pol + β) over the overlap. β is in reference-sensor
+# detections: an area with few fires keeps the regional factor; one with many gets its own.
 BETA = {"SNPP": 100, "MODIS": 100, "TERRA": 30}
 
 
-# ------------------------------------------------------------------ datos
+# ------------------------------------------------------------------ data
 def load(name: str) -> pd.DataFrame:
     d = pd.read_parquet(DIR / f"{name}.parquet")
     keys = [c for c in ("area", "cy", "cx", "month") if c in d]
@@ -64,9 +64,9 @@ def load(name: str) -> pd.DataFrame:
     return w
 
 
-# -------------------------------------------------------------- estimador
+# -------------------------------------------------------------- estimator
 def fit(df: pd.DataFrame, num: str, den: str, alpha) -> tuple[pd.Series, pd.Series]:
-    """Devuelve (K por región y mes, K nacional por mes)."""
+    """Returns (K per region and month, national K per month)."""
     nat = df.groupby("m")[[num, den]].sum()
     k_nat_m = (nat[num] / nat[den].where(nat[den] > 0)).reindex(range(1, 13))
     k_all = df[num].sum() / df[den].sum()
@@ -93,7 +93,7 @@ def apply(df: pd.DataFrame, den: str, k: pd.Series, k_nat_m: pd.Series) -> np.nd
 
 
 def current_method(cal: pd.DataFrame, test: pd.DataFrame, num: str, den: str, unit: list[str]) -> np.ndarray:
-    """Método provisional actual: mediana de cocientes anuales de la unidad, respaldo = cociente global."""
+    """Current provisional method: median of the unit's annual ratios, fallback = global ratio."""
     yr = cal.groupby(unit + ["year"])[[num, den]].sum()
     yr = yr[yr[den] >= 5]
     med = (yr[num] / yr[den]).groupby(level=unit).median()
@@ -102,7 +102,7 @@ def current_method(cal: pd.DataFrame, test: pd.DataFrame, num: str, den: str, un
     return np.where(np.isnan(k), k_glob, k) * test[den].to_numpy()
 
 
-# ------------------------------------------------------------- métricas
+# ------------------------------------------------------------- metrics
 def metrics(pred, true, unit_year=None) -> dict:
     pred, true = np.asarray(pred, float), np.asarray(true, float)
     out = {
@@ -122,7 +122,7 @@ def window(df: pd.DataFrame, a: str, b: str, den: str) -> pd.DataFrame:
 
 
 def loyo(cells: pd.DataFrame, areas: pd.DataFrame, link: str, alpha):
-    """Validación dejando un año fuera. Devuelve predicciones por celda-mes y área-mes."""
+    """Leave-one-year-out validation. Returns predictions per cell-month and area-month."""
     num, den, a, b = LINKS[link]
     cw, aw = window(cells, a, b, "x"), window(areas, a, b, "x")
     years = sorted(cw["year"].unique())
@@ -132,12 +132,12 @@ def loyo(cells: pd.DataFrame, areas: pd.DataFrame, link: str, alpha):
         k, kn = fit(cal, num, den, alpha)
         rows_c.append(tc.assign(pred=apply(tc, den, k, kn),
                                 pred_actual=current_method(cal, tc, num, den, ["ry", "rx"])))
-        # Áreas: método nuevo = factores por celda aplicados a los conteos de cada celda del polígono
+        # Areas: new method = per-cell factors applied to the counts of each cell in the polygon
         pa = ta.assign(pred=apply(ta, den, k, kn)).groupby(["area", "month", "year"])[["pred", num, den]].sum().reset_index()
         ca = aw[aw.year != y]
         cal_a = ca.assign(pred=apply(ca, den, k, kn)).groupby(["area", "month", "year"])[["pred", num, den]].sum().reset_index()
         pa["pred_actual"] = current_method(cal_a, pa, num, den, ["area"])
-        # Corrección local del polígono (solo con años de calibración)
+        # Local polygon correction (calibration years only)
         s = cal_a.groupby("area")[[num, "pred"]].sum()
         c = (s[num] + BETA[link]) / (s["pred"] + BETA[link])
         pa["pred_regional"] = pa["pred"]
@@ -149,7 +149,7 @@ def loyo(cells: pd.DataFrame, areas: pd.DataFrame, link: str, alpha):
 
 
 def interval_bins(pred: np.ndarray, true: np.ndarray) -> pd.DataFrame:
-    """Rango 10-90 % del cociente (true+1)/(pred+1), según el tamaño de la predicción."""
+    """10-90 % range of the ratio (true+1)/(pred+1), by prediction size."""
     lr = np.log((true + 1) / (pred + 1))
     b = np.digitize(pred, BIN_EDGES) - 1
     out = []
@@ -174,12 +174,12 @@ def coverage(pred, true, bins: pd.DataFrame) -> float:
 # ------------------------------------------------------------------ main
 def main() -> None:
     cells, areas = load("cells"), load("areas")
-    report = {"region_deg": REGION_DEG, "links": {}, "datos": "a11-db, México, SP, fire_type=0, confianza n/h"}
+    report = {"region_deg": REGION_DEG, "links": {}, "datos": "a11-db, Mexico, SP, fire_type=0, confidence n/h"}
     factors, bins_all = [], []
 
     for link in ("SNPP", "MODIS", "TERRA"):
         num, den, a, b = LINKS[link]
-        # 1) elegir α por error mensual a nivel celda
+        # 1) choose α by monthly error at cell level
         scores = {}
         for al in ALPHAS:
             pc, _ = loyo(cells, areas, link, al)
@@ -192,7 +192,7 @@ def main() -> None:
         bins = interval_bins(pc["pred"].to_numpy(), pc["true"].to_numpy())
         bins_all.append(bins.assign(link=link))
         res = {
-            "calibracion": f"{num} / {den}, {a[:7]} a {b[:7]}",
+            "calibracion": f"{num} / {den}, {a[:7]} to {b[:7]}",
             "alpha_por_error": scores, "alpha_elegido": best_key,
             "celdas_1grado": {"nuevo": metrics(pc.pred, pc.true, pc.ry.astype(str) + pc.rx.astype(str) + pc.year.astype(str)),
                               "actual": metrics(pc.pred_actual, pc.true, pc.ry.astype(str) + pc.rx.astype(str) + pc.year.astype(str))},
@@ -210,7 +210,7 @@ def main() -> None:
         print(f"\n=== {link}: {res['calibracion']}  alpha={best_key}")
         print(json.dumps({k: res[k] for k in ("celdas_1grado", "nacional", "areas", "cobertura_rango_10_90")}, ensure_ascii=False))
 
-        # 2) factores finales con todo el traslape
+        # 2) final factors using the whole overlap
         k, kn = fit(window(cells, a, b, "x"), num, den, best)
         if len(k):
             f = k.rename("k").reset_index()
@@ -222,7 +222,7 @@ def main() -> None:
     fac.to_parquet(DIR / "factors.parquet", index=False)
     pd.concat(bins_all, ignore_index=True).to_parquet(DIR / "bins.parquet", index=False)
     (DIR / "validation.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"\nfactores: {len(fac)} filas -> {DIR / 'factors.parquet'}")
+    print(f"\nfactors: {len(fac)} rows -> {DIR / 'factors.parquet'}")
 
 
 if __name__ == "__main__":

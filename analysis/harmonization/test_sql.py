@@ -1,5 +1,5 @@
-"""Prueba harmonization_v2 contra a11-db SIN modificarla: todo se crea en pg_temp dentro de una transacción
-que se deshace al final.
+"""Tests harmonization_v2 against a11-db WITHOUT modifying it: everything is created in pg_temp inside a transaction
+that is rolled back at the end.
 
     python analysis/harmonization/test_sql.py
 """
@@ -15,7 +15,7 @@ from dotenv import find_dotenv, load_dotenv
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "harmonization"
 
-# Polígono dibujado en Tabasco, donde hay quemadores de gas (fuentes estáticas).
+# Polygon drawn in Tabasco, where there are gas flares (static sources).
 TABASCO = '{"type":"Polygon","coordinates":[[[-93.4,17.7],[-92.9,17.7],[-92.9,18.1],[-93.4,18.1],[-93.4,17.7]]]}'
 
 
@@ -28,7 +28,7 @@ def main() -> None:
         t = time.time()
         con.execute(sql)
         n_static = con.execute("SELECT count(*) FROM pg_temp.static_sites").fetchone()[0]
-        print(f"objetos temporales creados en {time.time() - t:.1f}s; sitios estáticos: {n_static:,}")
+        print(f"temporary objects created in {time.time() - t:.1f}s; static sites: {n_static:,}")
 
         frames = []
         for area in ("stgo", "arteaga", "ocos"):
@@ -38,7 +38,7 @@ def main() -> None:
                 dt = time.time() - t
                 df = pd.DataFrame(rows, columns=["month", "count", "low", "high", "source"]).assign(area=area, ver=ver)
                 frames.append(df)
-                print(f"{area:8s} {ver:6s} {len(df)} meses en {dt:.1f}s")
+                print(f"{area:8s} {ver:6s} {len(df)} months in {dt:.1f}s")
 
         for label, geo in (("tabasco", TABASCO),):
             for ver, fn in (("v2", "pg_temp.harmonize_polygon"), ("actual", "public.harmonize_polygon")):
@@ -52,7 +52,7 @@ def main() -> None:
     df.to_parquet(DATA / "sql_test.parquet", index=False)
     print(out.unstack(0).to_string())
     last = df[pd.to_datetime(df["month"]) >= "2026-06-01"].pivot_table(index=["area", "month"], columns="ver", values="count")
-    print("\nMeses recientes (NRT desde 2026-08):\n", last.to_string())
+    print("\nRecent months (NRT since 2026-08):\n", last.to_string())
 
 
 if __name__ == "__main__":

@@ -108,8 +108,19 @@
   // Strongest detections for the map: { total, byType, points: [[lat, lon, frp, conf_class, satellite, fire_type], ...] }.
   // types: FIRMS fire types to include (0 vegetation, 1 volcano, 2 static land source, 3 offshore); default [0].
   async function points(spec, from, to, satellites, types) {
-    const body = await (await post("/api/hotspots", { ...spec, from, to, satellites, types, format: "json" })).json();
+    // Nominal/high confidence only, the detections the harmonized count uses, so dots and count agree.
+    const body = await (await post("/api/hotspots", { ...spec, from, to, satellites, types, format: "json", minConfidence: "nominal" })).json();
     if (body.error) throw new Error(body.error);
+    // Older server without the filter: drop low-confidence points here (exact when every point was returned).
+    if (body.points.some((p) => p[3] === "l")) {
+      const complete = body.points.length >= body.total;
+      body.points = body.points.filter((p) => p[3] !== "l");
+      if (complete) {
+        body.total = body.points.length;
+        body.byType = {};
+        for (const p of body.points) body.byType[p[5] || 0] = (body.byType[p[5] || 0] || 0) + 1;
+      }
+    }
     return body;
   }
 

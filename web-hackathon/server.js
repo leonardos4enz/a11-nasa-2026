@@ -392,7 +392,9 @@ async function handleHotspots(req, res) {
     ? [...new Set(body.types.map(Number))].filter((t) => FIRE_TYPES.includes(t)).sort() : [0];
   if (!types.length) return sendJson(res, 400, { error: "No valid fire types." });
 
-  const cacheKey = asJson ? `dots:${geo.key}:${body.from}:${body.to}:${sats.join()}:${types.join()}` : null;
+  // The map asks for nominal/high confidence only, the same detections the harmonized count uses.
+  const confSql = asJson && body.minConfidence === "nominal" ? " AND h.conf_class <> 'l'" : "";
+  const cacheKey = asJson ? `dots:${geo.key}:${body.from}:${body.to}:${sats.join()}:${types.join()}:${confSql ? "nh" : "all"}` : null;
   const hit = cacheKey && cache.get(cacheKey);
   if (hit && Date.now() - hit.t < CACHE_MS) return sendJson(res, 200, hit.body);
 
@@ -400,7 +402,7 @@ async function handleHotspots(req, res) {
     const bad = await checkArea(geo);
     if (bad) return sendJson(res, 200, { error: bad });
     const where = `ST_Intersects(h.geom, (SELECT ${geo.sql})) AND h.acq_date BETWEEN $2::date AND $3::date
-                   AND ${FIRE_TYPE_SQL} = ANY($5::int[]) AND h.satellite = ANY($4::text[])`;
+                   AND ${FIRE_TYPE_SQL} = ANY($5::int[]) AND h.satellite = ANY($4::text[])${confSql}`;
     const params = [geo.param, body.from, body.to, sats, types];
     if (asJson) {
       const { rows } = await pool.query(

@@ -178,7 +178,8 @@ mood mirrors the conversation; the animations above are recorded from the real e
 
 The agent harness ([chat-agent.js](web-hackathon/chat-agent.js)) runs on the server. Server tools run there and loop
 straight back to the model; page tools are sent to the browser, where [agent.js](web-hackathon/public/agent.js) plays
-them with a visible cursor and posts the results back, so the model can continue.
+them with a visible cursor and posts the results back, so the model can continue. When Ember searches the documents,
+the chat shows it as the **Researcher**, a small blue Ember with the query and the sections it found.
 
 - **13 page tools** (search an area, set the month, layers, hotspot filter, area around a point, downloads…) plus
   **document search** over [web-hackathon/knowledge/](web-hackathon/knowledge/).

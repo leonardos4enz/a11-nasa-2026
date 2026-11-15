@@ -117,6 +117,14 @@ class Handler(SimpleHTTPRequestHandler):
             actions.append(("download_report", {"file": f, "range": "this_year"}))
         if "loop" in low:
             return {"reply": "", "actions": [{"id": "loop_0", "name": "get_month_data", "args": {"year": 2024}}]}
+        if "docs" in low or "how does" in low or "nothing" in low:  # the Researcher card (document search)
+            found = [] if "nothing" in low else [
+                {"document": "How the counts are harmonized", "section": "The calibration chain"},
+                {"document": "Harmonization details", "section": "Validation"},
+                {"document": "Satellites and hotspots", "section": "Why VIIRS counts more"}]
+            return {"reply": "(mock) MODIS is scaled to the VIIRS NOAA-20 level by region and month (docs: How the counts are harmonized).",
+                    "actions": [], "done": [{"label": "Searching the docs", "ok": True, "agent": "researcher",
+                                             "query": q[:120], "found": found}]}
         if "demo" in low:
             actions = [("select_area", {"query": "Santiago"}), ("set_month", {"year": 2024, "month": 4}),
                        ("set_hotspot_filter", {"fire_types": ["vegetation", "industrial"]}), ("open_tab", {"tab": "season"})]

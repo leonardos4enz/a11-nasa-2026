@@ -132,8 +132,41 @@
   }
   if (window.EmberAgent) window.EmberAgent.confirm = confirmInChat;
 
+  // ---- Sub-agent cards: the Researcher (blue Ember) searches the project documents for Ember ----
+  const AGENTS = { researcher: { name: "Researcher", color: "blue" } };
+  let minis = []; // mini Embers alive in the log, destroyed on every render
+  function agentCard(m) {
+    const a = AGENTS[m.who] || { name: m.who, color: "blue" };
+    const el = document.createElement("div");
+    const found = m.found || [];
+    const none = m.state !== "fail" && !found.length;
+    el.className = `ember-msg agent${m.state === "fail" ? " fail" : none ? " none" : ""}`;
+    el.innerHTML =
+      `<div class="ag-pet" aria-hidden="true"></div>` +
+      `<div class="ag-body"><div class="ag-head"><b>${esc(a.name)}</b><span>${m.state === "fail" ? "could not search the docs" : "searched the docs"}</span></div>` +
+      (m.query ? `<div class="ag-q">“${esc(m.query)}”</div>` : "") +
+      (found.length
+        ? `<ul class="ag-found">${found.map((f) => `<li title="${esc(f.document)}"><span>${esc(f.section || f.document)}</span></li>`).join("")}</ul>`
+        : m.state === "fail" ? "" : `<div class="ag-none">Nothing relevant in the docs</div>`) +
+      `</div>`;
+    if (window.Ember) {
+      const pet = Ember.create(el.querySelector(".ag-pet"), { color: a.color });
+      minis.push(pet);
+      // Just arrived: reads, finds, then settles. Based on the card's age so re-renders do not restart it.
+      const end = m.state === "fail" ? "sad" : none ? "doubt" : "proud";
+      const steps = [[0, "reading"], [1100, none || m.state === "fail" ? end : "found"], [2600, end]];
+      const age = Date.now() - (m.t || 0);
+      let cur = steps[0];
+      steps.forEach((s) => { if (age >= s[0]) cur = s; else setTimeout(() => pet.gesture(s[1]), s[0] - age); });
+      pet.gesture(cur[1]);
+    }
+    return el;
+  }
+
   function render() {
     welcome.hidden = history.length > 0;
+    minis.forEach((p) => p.destroy());
+    minis = [];
     log.innerHTML = "";
     const stacks = new Map(); // index of the turn's first action -> its actions
     let first = -1;
@@ -149,6 +182,7 @@
         if (stacks.has(i)) log.appendChild(actionStack(i, stacks.get(i)));
         return;
       }
+      if (m.role === "agent") { log.appendChild(agentCard(m)); return; }
       const el = document.createElement("div");
       el.className = "ember-msg " + m.role;
       if (m.role === "bot") el.innerHTML = md(m.text);
@@ -205,7 +239,10 @@
         }
         const actions = Array.isArray(data.actions) ? data.actions : [];
         // Steps the server already ran (e.g. the document search) join the turn's action stack.
-        if (Array.isArray(data.done)) data.done.forEach((d) => history.push({ role: "act", text: String(d.label || "Step"), state: d.ok === false ? "fail" : "ok" }));
+        // A step with `agent` (the Researcher's document search) gets its own card with a small blue Ember.
+        if (Array.isArray(data.done)) data.done.forEach((d) => history.push(d.agent
+          ? { role: "agent", who: String(d.agent), query: String(d.query || ""), found: Array.isArray(d.found) ? d.found.slice(0, 4) : [], state: d.ok === false ? "fail" : "ok", t: Date.now() }
+          : { role: "act", text: String(d.label || "Step"), state: d.ok === false ? "fail" : "ok" }));
         if (data.reply) history.push({ role: "bot", text: data.reply });
         if (!actions.length || !agentUI) {
           if (!data.reply) history.push({ role: "bot", text: "(empty reply)" });

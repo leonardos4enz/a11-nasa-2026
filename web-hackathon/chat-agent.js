@@ -191,6 +191,12 @@ function serverTools({ rag }) {
         required: ["query"],
       },
       label: (a) => `Searching the docs: “${String(a.query || "").slice(0, 60)}”`,
+      // Shown in the chat as the Researcher (a small blue Ember): what it looked for and which sections it found.
+      agent: "researcher",
+      report: (a, r) => ({
+        query: String(a.query || "").slice(0, 120),
+        found: (r.results || []).slice(0, 4).map((h) => ({ document: String(h.document || ""), section: String(h.section || "") })),
+      }),
       run: async ({ query, k }) => {
         const hits = await rag.search(query, k || 4);
         return hits.length ? { ok: true, results: hits } : { ok: true, results: [], note: "Nothing relevant in the docs." };
@@ -549,7 +555,14 @@ function createAgent({ pool, rag }) {
           } catch (err) {
             result = { ok: false, error: err.message };
           }
-          if (tool) done.push({ label: tool.label ? tool.label(call.args) : call.name, ok: result.ok !== false });
+          if (tool) {
+            const step = { label: tool.label ? tool.label(call.args) : call.name, ok: result.ok !== false };
+            if (tool.agent) {
+              step.agent = tool.agent;
+              try { Object.assign(step, tool.report ? tool.report(call.args, result || {}) : {}); } catch {}
+            }
+            done.push(step);
+          }
           const toolRow = { r: "tool", id: call.id, c: clip(JSON.stringify(result), 4000) };
           toSave.push(toolRow);
           msgs.push(deserialize(toolRow, L));

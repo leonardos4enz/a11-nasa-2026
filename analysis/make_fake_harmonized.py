@@ -103,7 +103,7 @@ def main():
         "synthetic": True,
         "generated_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "data_through": through.isoformat(),
-        "baseline": {"first_year": FIRST_YEAR, "last_year": BASELINE_LAST},
+        "baseline": {"first_year": FIRST_YEAR, "normal_first_year": max(FIRST_YEAR, 2003), "last_year": BASELINE_LAST},
         "units": "VIIRS-equivalent vegetation-fire hotspots per month",
         "reference": "VIIRS (NOAA-20)",
         "method": "FAKE: seasonal profile x random year factor. Replace with overlap calibration (docs/research/04).",

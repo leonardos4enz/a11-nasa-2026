@@ -71,7 +71,9 @@
     areas.forEach((a) => { for (let y = y0; y <= y1; y++) if (a.src[y].some((s) => s && s !== "VIIRS")) eraEnd = Math.max(eraEnd, y); });
     return {
       meta, areas, source: base, synthetic: meta.synthetic !== false, provisional: Boolean(meta.provisional),
-      firstYear: y0, baselineLast: meta.baseline.last_year,
+      // normal_first_year: first year of the "normal" (typical, percentiles, categories); the timeline still starts
+      // at first_year. 2003 = first full year of Aqua (2001-2002 depend on Terra only).
+      firstYear: y0, normalFirstYear: Math.max(y0, meta.baseline.normal_first_year ?? y0), baselineLast: meta.baseline.last_year,
       currentYear: ty, currentMonth: tm - 1, currentDay: td, eraEnd,
       generatedAt: new Date(meta.generated_at),
     };

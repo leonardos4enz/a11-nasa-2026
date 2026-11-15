@@ -37,7 +37,7 @@ const PAGE_TOOLS = [
   {
     name: "get_month_data",
     description:
-      "Read the monthly hotspot counts of the current area WITHOUT changing the page: for each month of the given year, the count, its category vs the 25-year baseline and the typical (median) count; plus the area's peak months. Use it to answer questions about other months or years.",
+      "Read the monthly hotspot counts of the current area WITHOUT changing the page: for each month of the given year, the count, its category vs the baseline (the same month from 2003 to last year) and the typical (median) count; plus the area's peak months. Use it to answer questions about other months or years.",
     parameters: {
       type: "object",
       properties: { year: { type: "integer", description: "Four-digit year. Default: the year on screen." } },

@@ -185,7 +185,7 @@
       });
       const typ = typeof typical === "function" ? typical() : [];
       const peak = typ.map((t, m) => ({ month: MONTHS[m], typical: t })).sort((a, b) => b.typical - a.typical).slice(0, 3);
-      return { ok: true, area: area.name, year: y, months, peak_months_typical: peak, baseline: `${Y0}–${Y1}` };
+      return { ok: true, area: area.name, year: y, months, peak_months_typical: peak, baseline: `${typeof B0 !== "undefined" ? B0 : Y0}–${Y1}` };
     },
     async list_areas({ query = "", country = "all" }) {
       ready();

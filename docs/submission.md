@@ -42,7 +42,7 @@ the map, or a circle around a latitude/longitude) it shows:
 
 - A calendar of monthly hotspots from 2001 to today (month × year heatmap with a sequential color ramp), so the
   critical months and the most active years stand out at a glance.
-- The selected month against the same month in the previous 25 years: median, normal range (middle third of past
+- The selected month against the same month in every year since 2003: median, normal range (middle third of past
   years), percentile and a plain-language label from "much below" to "record high", colored with a
   colorblind-safe diverging ramp (ColorBrewer RdBu).
 - The fire season (months holding 80% of hotspots, peak month) and what usually comes next.

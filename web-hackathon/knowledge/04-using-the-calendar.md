@@ -11,7 +11,7 @@ a month to select it, use the arrows to jump to the previous or next month with 
 wheel, and press Play to animate through time. The shaded band marks the MODIS era, whose counts are estimated.
 
 ## Is this month unusual?
-The Overview tab compares the selected month with the same calendar month in the baseline years (2001-2025, excluding
+The Overview tab compares the selected month with the same calendar month in the baseline years (2003-2025, excluding
 the month's own year). Categories: Record high (above every past value), Much above normal (90th percentile or more),
 Above normal (67th-90th), Normal, Below normal (10th-33rd) and Much below normal (10th or less). When the typical value
 is under 3 or most past years had zero fires, the month is "Too few fires to judge". The current month is compared

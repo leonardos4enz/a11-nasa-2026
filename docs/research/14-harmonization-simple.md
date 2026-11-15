@@ -16,7 +16,7 @@ enough to explain in five steps, as in the team presentation "Armonización MODI
 | 2. Median | Median of the yearly ratios, 2012-02..2021-12 | 2022 on is left out (MODIS orbit drift). January 2012 is partial for S-NPP, so January uses 2013-2021 |
 | 3. Per month | 12 factors k (`harmonization_k`, link `AQUA`) | 10th-90th percentile of the yearly ratios kept as `k_p10` / `k_p90` |
 | 4. Translate | 2002-07..2012-01: Aqua × k | Before 2002-07 (Terra only): Terra × k<sub>T</sub> × k, k<sub>T</sub> = median Aqua ÷ Terra per month, 2003-2011 (link `TERRA`) |
-| 5. Compare | Each month vs its historical median | Unchanged (`harmonized_*_json` in `schema.sql`) |
+| 5. Compare | Each month vs the median of the same month, 2003 → last year | `baseline.normal_first_year = 2003` in the index; 2001-2002 rest on Terra only, so they are shown but not used for "normal" |
 
 **One reference satellite per sensor** (INPE rule): Aqua for MODIS (13:30 overpass, like VIIRS); VIIRS = S-NPP until
 2018-03 and NOAA-20 from 2018-04 (S-NPP ≈ 1.01 × NOAA-20 in 2019-2021, chained without a factor). Satellites are
@@ -27,7 +27,7 @@ never added up, because a new launch would create a false jump.
 | 2018-04 → now | NOAA-20 | `VIIRS` | = count |
 | 2012-02 → 2018-03 | S-NPP | `VIIRS` | = count |
 | 2002-07 → 2012-01 | Aqua × k[m] | `MODIS_calibrated` | Aqua × k_p10[m] … Aqua × k_p90[m] |
-| 2001-01 → 2002-06 | Terra × k<sub>T</sub>[m] × k[m] | `MODIS_calibrated` | both quartiles multiplied |
+| 2001-01 → 2002-06 | Terra × k<sub>T</sub>[m] × k[m] | `MODIS_calibrated` | both 10-90 % bands multiplied |
 
 Polygons with no S-NPP detections in 2012-02..2018-03 (the US backfill does not download S-NPP) use Aqua × k until
 2018-03.

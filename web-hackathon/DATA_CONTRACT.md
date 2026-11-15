@@ -52,7 +52,7 @@ py analysis/make_fake_harmonized.py --through 2026-11-14
   "synthetic": true,
   "generated_at": "2026-11-14T15:00:00Z",
   "data_through": "2026-11-14",
-  "baseline": { "first_year": 2001, "last_year": 2025 },
+  "baseline": { "first_year": 2001, "normal_first_year": 2003, "last_year": 2025 },
   "units": "VIIRS-equivalent vegetation-fire hotspots per month",
   "reference": "VIIRS (NOAA-20)",
   "method": "short description of the harmonization",
@@ -69,7 +69,7 @@ py analysis/make_fake_harmonized.py --through 2026-11-14
 | `synthetic` | `true` shows the "Illustrative data" pill, tags the CSV as `_ILLUSTRATIVE` and tells Ember the data is illustrative. `false` shows "Data through <date>". |
 | `generated_at` | "Updated … ago" under the current month. |
 | `data_through` | Last day with data. Its month is the "in progress" month; later months are hidden. |
-| `baseline` | `first_year` = start of the timeline; `first_year`–`last_year` = the years used for "typical", percentiles and categories. |
+| `baseline` | `first_year` = start of the timeline; `normal_first_year`–`last_year` = the years used for "typical", percentiles and categories (optional, defaults to `first_year`; 2003 = first full year of Aqua). |
 | `units`, `reference`, `method` | Shown in the pill tooltip. |
 
 ## `areas/<id>.json`

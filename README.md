@@ -131,7 +131,7 @@ flowchart RL
 2. **Median** over 2012–2021, before the MODIS orbit drift; the 10th–90th percentile of the ratios is the uncertainty band.
 3. **Twelve factors k**, one per calendar month (about ×9.7 in June, ×5.7 in December).
 4. **Translate** the MODIS years: Aqua × k (Terra × k_T × k before Aqua flew). From 2012-02 VIIRS is used as observed.
-5. **Compare** each month with its historical median: that colours the calendar.
+5. **Compare** each month with the median of the same month since 2003 (the first full year of Aqua): that colours the calendar.
 
 **Same filters for every sensor:** vegetation fires only, nominal/high confidence. Gas flares and volcanoes are
 removed from the near-real-time feed: **95.6 %** of static detections gone, **1.5 %** of vegetation fires lost

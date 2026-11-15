@@ -9,7 +9,7 @@
 --   3. Per month: twelve factors k, one per calendar month.
 --   4. Translate: 2002-07..2012-01 = Aqua x k. Before 2002-07 only Terra flies:
 --               Terra x (Aqua/Terra factor, median of 2003..2011) x k. From 2012-02: VIIRS as observed.
---   5. Compare  each month with its historical median (done by harmonized_*_json in schema.sql, unchanged).
+--   5. Compare  each month with its historical median from 2003 (baseline.normal_first_year; the page computes it).
 -- Kept from v2: the NRT static-source filter (gas flares, refineries, volcanoes), which is data cleaning.
 -- The regional v2 method is documented as an improvement not implemented: docs/research/13-harmonization-v2.md.
 BEGIN;
@@ -206,7 +206,10 @@ CREATE OR REPLACE FUNCTION harmonized_index_json() RETURNS jsonb LANGUAGE sql ST
         'generated_at', to_char(coalesce((SELECT max(last_loaded_at) FROM data_freshness), now()) AT TIME ZONE 'UTC',
                                 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
         'data_through', to_char(t.d, 'YYYY-MM-DD'),
-        'baseline', jsonb_build_object('first_year', 2001, 'last_year', extract(year FROM t.d)::int - 1),
+        -- first_year = start of the timeline; normal_first_year = first year of the "normal" (2003: first full year of
+        -- Aqua; 2001-2002 rest on Terra only and are the least certain).
+        'baseline', jsonb_build_object('first_year', 2001, 'normal_first_year', 2003,
+                                       'last_year', extract(year FROM t.d)::int - 1),
         'units', 'VIIRS-equivalent vegetation-fire hotspots per month, nominal/high confidence',
         'reference', 'VIIRS (S-NPP until 2018-03, NOAA-20 from 2018-04)',
         'method', 'One factor k per calendar month = median of VIIRS / Aqua over 2012-2021 in Mexico (before the MODIS orbit drift). 2012-02 on: VIIRS as observed (S-NPP, then NOAA-20 from 2018-04). 2002-07..2012-01: Aqua x k. Before 2002-07 only Terra flies: Terra x (Aqua/Terra factor, 2003-2011) x k. Areas with no S-NPP data (United States): Aqua x k until 2018-03. Vegetation fires, nominal/high confidence; NRT static sources removed. Low/high = 10th-90th percentile of the yearly ratios.',

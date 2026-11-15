@@ -15,7 +15,7 @@ Ember Atlas is a web application that turns 25 years of NASA FIRMS active-fire h
 activity calendar for any area of interest. MODIS (2000→) and VIIRS (2012→) cannot be compared directly: VIIRS sees
 several times more hotspots, so joining the raw records makes fire seem to explode after 2012. We convert MODIS to
 the VIIRS scale with one factor per calendar month (median VIIRS ÷ Aqua over 2012–2021) and an uncertainty band,
-validated by leaving each year out (3.7% typical error on the yearly total for Mexico). Users pick a
+validated by leaving each year out (5% typical error on the yearly total for Mexico). Users pick a
 municipality, draw a polygon or enter coordinates, and see a month-by-year calendar from 2001 to this week, how the
 current month compares with its historical normal range, the fire season, detected vs reported fires, and a 72-hour
 forecast. Everything downloads as CSV, PNG or a one-page report. Ember, an assistant that uses the page, explains the
@@ -59,7 +59,7 @@ MODIS orbit drift; keep twelve factors, one per calendar month, because the gap 
 its historical median. The interquartile range of the yearly ratios is the uncertainty band. All sensors use the same
 filters (vegetation fires, nominal/high confidence); gas flares and volcanoes are removed from the near-real-time feed
 (95.6% of static detections removed, 1.5% of vegetation fires lost, tested out of sample). Validation by
-leave-one-year-out: 3.7% typical error on the yearly total for Mexico (worst year +11.5%), and r = 0.83 monthly against
+leave-one-year-out: 5.0% typical error on the yearly total for Mexico (worst year +11.6%), and r = 0.83 monthly against
 77,420 fires reported by CONAFOR 2015–2025. After harmonization the sensor of origin no longer matters; the patterns,
 trends and anomalies do.
 
@@ -81,8 +81,8 @@ data exploration), Node.js server, HTML/CSS/JavaScript with Leaflet for the web 
 LangChain + MiniMax for Ember, OpenAI embeddings for the document search, Docker on Easypanel for hosting.
 
 **Creativity and decisions.** We chose a method simple enough to explain in five steps: one factor per calendar month
-instead of a single global factor, because the VIIRS/Aqua ratio changes with the season (about ×5.9 in January to
-×10.7 in June). We also built and tested a regional version (factors per 1° cell and a local correction per area) that
+instead of a single global factor, because the VIIRS/Aqua ratio changes with the season (about ×5.7 in December to
+×9.7 in June). We also built and tested a regional version (factors per 1° cell and a local correction per area) that
 is more accurate in small areas, and documented it as a future improvement instead of shipping the extra complexity.
 Every estimate carries an uncertainty band. The calendar puts the current month next to its own history, not next to
 a global average. Areas cover both Mexico and the United States. Method and limits:

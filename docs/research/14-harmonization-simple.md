@@ -44,20 +44,26 @@ each year of 2012-2021 is hidden, k is recomputed with the other years, the hidd
 compared with VIIRS. It returns the monthly WAPE, the median monthly and yearly errors, the error of each year, the
 share of months whose true value falls inside the IQR band, and the twelve factors.
 
-Results of the method study (presentation, national counts of `web/explorer/data/mexico_monthly.json`, all
-confidence levels):
+Results on a11-db (applied 2026-11-15, nominal/high confidence), next to the presentation's study (all confidence
+levels, `web/explorer/data/mexico_monthly.json`):
 
-| Metric | Value |
-|---|---|
-| Yearly total, median error | **3.7 %** |
-| Worst year | 2015, +11.5 % |
-| Single month, median error | 6.5 % |
-| Quiet months | January 2012: +109 % |
-| Predicting 2022-2025 with 2012-2021 factors | −8.7 % to +7.0 % |
+| Metric | **a11-db (app)** | Presentation |
+|---|---|---|
+| Yearly total, median error | **5.0 %** | 3.7 % |
+| Worst year | 2015, +11.6 % | 2015, +11.5 % |
+| Single month, median error | **6.5 %** | 6.5 % |
+| Monthly WAPE | 7.2 % | — |
+| True month inside the IQR band | 41 % | — |
 
-The values with the app's filters (nominal/high confidence) come out of `harmonization_validation_json()` after
-applying the SQL; the factors themselves change with the filter, which is why they are recomputed in the database
-instead of copied from the presentation.
+Error by year (a11-db): 2012 −8.7 %, 2013 +2.8 %, 2014 +6.9 %, 2015 +11.6 %, 2016 +0.8 %, 2017 −4.7 %,
+2018 −5.3 %, 2019 +0.7 %, 2020 +5.5 %, 2021 −3.3 %.
+
+Factors k (VIIRS ÷ Aqua) by month, Jan → Dec: 5.82, 6.28, 6.35, 6.45, 7.56, 9.74, 8.71, 8.22, 6.31, 6.76, 7.27, 5.69
+(the presentation, with all confidence levels, had 5.92 … 10.72). Aqua ÷ Terra: 1.65, 1.50, 1.46, 1.20, 1.14, 1.16,
+1.14, 1.20, 1.08, 1.13, 1.38, 1.54.
+
+The IQR band is narrow by construction (middle half of the years), so it holds the true month only 41 % of the time;
+it says "most likely", not "guaranteed". v2's 10-90 % range from the errors held 80-84 %.
 
 ## 3. What was removed (and why it is still documented)
 

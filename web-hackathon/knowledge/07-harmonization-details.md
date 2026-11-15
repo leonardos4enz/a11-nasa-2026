@@ -14,7 +14,7 @@ range is wider, because it combines the Terra-to-Aqua factor and the Aqua-to-VII
 ## Why 2001 to mid-2002 has its own factor
 Aqua started in July 2002, so before that only Terra observed. Terra passes at about 10:30, before the afternoon fire
 peak, and sees fewer fires than Aqua. Those months are first moved to the "Aqua scale" with an Aqua/Terra factor per
-calendar month learned in 2003-2011 (between about 1.05 in September and 1.63 in January in the method study), and
+calendar month learned in 2003-2011 (between about 1.08 in September and 1.65 in January), and
 then multiplied by k. They are the least certain months of the series.
 
 ## Why the calibration uses only 2012-2021

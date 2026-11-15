@@ -129,7 +129,7 @@ flowchart RL
 
 1. **Divide** VIIRS ÷ Aqua for each month in Mexico (Aqua passes at 13:30, like VIIRS).
 2. **Median** over 2012–2021, before the MODIS orbit drift; the interquartile range is the uncertainty band.
-3. **Twelve factors k**, one per calendar month (June needs about ×10.7, January about ×5.9).
+3. **Twelve factors k**, one per calendar month (about ×9.7 in June, ×5.7 in December).
 4. **Translate** the MODIS years: Aqua × k (Terra × k_T × k before Aqua flew). From 2012-02 VIIRS is used as observed.
 5. **Compare** each month with its historical median: that colours the calendar.
 
@@ -138,7 +138,7 @@ removed from the near-real-time feed: **95.6 %** of static detections gone, **1.
 (tested out of sample). Everything runs in SQL, including the calibration (`refresh_harmonization_k()`).
 
 **Validation (each year of 2012–2021 hidden, predicted from Aqua, compared with VIIRS):** typical error on the yearly
-total **3.7 %** (worst year 2015, +11.5 %), 6.5 % for a single month. `SELECT harmonization_validation_json();`
+total **5.0 %** (worst year 2015, +11.6 %), 6.5 % for a single month. `SELECT harmonization_validation_json();`
 reruns it on the database.
 
 Against **77,420 fires reported by CONAFOR** (2015–2025) the harmonized monthly series correlates at **r = 0.83**.

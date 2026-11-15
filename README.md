@@ -7,14 +7,35 @@ Challenge: [Harmonization of MODIS and VIIRS Hot Spots](https://www.spaceappscha
 > VIIRS 2012→) into a consistent **burning activity calendar**, so responders, scientists and land managers
 > can see when and where burning happens, which periods are critical, and whether current activity is unusual.
 
+**Live app: https://emberatlas.ink** · Pitch deck (7 slides): https://emberatlas.ink/deck.html
+
+## What Ember Atlas does
+
+- **Burning activity calendar** (month × year, 2001 → this week) for any area: a listed municipality or protected
+  area in Mexico or the United States, a polygon drawn on the map, or a circle around a latitude/longitude.
+- **Harmonized series:** MODIS (Terra/Aqua) and Suomi NPP are calibrated to the VIIRS NOAA-20 scale by 1° region and
+  calendar month, with a local correction per polygon and a 10–90% uncertainty band. Validated by leaving each year
+  out: **3.6% monthly error for Mexico** (first single-ratio method: 5.4%); r = 0.83 monthly against 77,420 fires
+  reported by CONAFOR (2015–2025). Method and limits: [doc 13](docs/research/13-harmonization-v2.md).
+- **Is this month unusual?** The selected month against the same month in the previous 25 years (median, normal
+  range, percentile, category from "much below" to "record high"), the fire season and what usually comes next.
+- **Detected vs reported fires:** hotspots against CONAFOR (Mexico) and NIFC WFIGS (United States).
+- **72 h forecast** from FireCast (LightGBM on VIIRS NOAA-20, AUC 0.914 on all of 2025). See
+  [FORECAST.md](web-hackathon/FORECAST.md).
+- **Downloads** for any date range: hotspots CSV, monthly calendar CSV, calendar and charts as PNG, one-page report.
+- **Ember**, an assistant that answers about the area on screen and can operate the page; it only cites numbers from
+  the page, its tools or our documentation ([web-hackathon/README.md](web-hackathon/README.md)).
+- **Daily data:** n8n pipelines load the FIRMS archive and the near-real-time feed into PostgreSQL + PostGIS
+  ([n8n/README.md](n8n/README.md)); gas flares and volcanoes are removed from the recent months.
+
 ## Status
 
-**Phase 1 — Research & study** ✅ (this commit)
-Phase 2 — Harmonization pipeline ⏳
-Phase 3 — Web platform ⏳
-Phase 4 — Demo & submission ⏳
+Phase 1 — Research & study ✅
+Phase 2 — Harmonization pipeline ✅ (v2, validated)
+Phase 3 — Web platform ✅ (live at emberatlas.ink, refreshed daily)
+Phase 4 — Demo & submission ✅
 
-## Key findings so far
+## Key findings
 
 - The only official resource is **NASA FIRMS**. Historical Standard Processing data can be downloaded per
   country and year **without login**; recent data come from the FIRMS Area API (free MAP_KEY).
@@ -22,8 +43,8 @@ Phase 4 — Demo & submission ⏳
   series correlate at **r ≈ 0.995** → the fire *timing* is consistent; harmonization is mainly a *scale*
   problem. The ratio varies by month (3.2×–5.9×), so a single global factor is not enough.
 - **Suomi NPP stopped delivering data on Nov 2, 2026.** VIIRS continuity is NOAA-20 / NOAA-21.
-- Recommended method: **overlap calibration by region and calendar month** (MODIS → VIIRS-equivalent)
-  plus **anomaly/percentile views** for the calendar.
+- Method used: **calibration chain through real sensor overlaps, by region and calendar month**
+  (MODIS → S-NPP → NOAA-20) plus **anomaly/percentile views** for the calendar.
 
 ## Research documents
 
@@ -36,12 +57,18 @@ Phase 4 — Demo & submission ⏳
 | 05 | [Web app requirements & architecture](docs/research/05-web-app-requirements.md) |
 | 06 | [Submission rules that affect us](docs/research/06-submission-rules.md) |
 | 07 | [Understanding the data (satellites, coverage, a reading, the overlap)](docs/research/07-understanding-the-data.md) |
+| 08 | [End users](docs/research/08-end-users.md) |
+| 09 | [User research and use cases](docs/research/09-user-research-and-use-cases.md) |
+| 10 | [Interface design](docs/research/10-interface-design.md) |
+| 11 | [UI audit and references](docs/research/11-ui-audit-and-references.md) |
+| 12 | [Harmonization: state of the art](docs/research/12-harmonization-state-of-the-art.md) |
+| 13 | [Harmonization v2: regional calibration, validated](docs/research/13-harmonization-v2.md) |
 | — | [References](docs/research/references.md) |
 
 ## Interactive Fire Data Explorer
 
 A 3D globe that shows every satellite's hotspots on a grid, simulates each orbit's coverage over 24 hours,
-and explains every field of a reading. See [web/README.md](web/README.md).
+and explains every field of a reading (research tool used before harmonizing). See [web/README.md](web/README.md).
 
 ```bash
 python web/server.py
@@ -51,12 +78,18 @@ python web/server.py
 
 ```
 .
-├── docs/            Documentation (research, methodology, presentation material)
-│   └── research/    Phase 1 study of the challenge and resources
-├── analysis/        Python scripts / notebooks for data exploration and harmonization
-├── data/            Data folder (raw downloads are git-ignored; see data/README.md)
-└── web/             Web platform (front-end + API) — Phase 3
+├── docs/research/     Phase 1 study, harmonization method and validation
+├── analysis/          Python: sensor comparison, harmonization (pull → calibrate → build_sql → test_sql)
+│   └── db/            SQL: schema, harmonization v2, chat memory, document search
+├── n8n/               Data pipelines (FIRMS archive + daily NRT → PostgreSQL/PostGIS)
+├── web-hackathon/     The deployed app (emberatlas.ink): Node server, calendar page, Ember, deck, knowledge docs
+├── web/               Fire Data Explorer (research globe) and early mockup
+└── data/              Data folder (raw downloads are git-ignored; see data/README.md)
 ```
+
+## Team A11 (Monterrey)
+
+Leonardo Sáenz · José Ángel Ipiña · Abiel Jefté Ramírez
 
 ## Quick start (analysis)
 
@@ -83,6 +116,13 @@ observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science
 
 ## AI (SI) assistance disclosure
 
-Parts of this repository's research documents and code were drafted with the assistance of an AI model
-(Claude, by Anthropic) and reviewed by the team, as required by the Space Apps 2026 SI acknowledgment rules.
-All quantitative results are reproducible with the scripts in `analysis/`.
+As required by the Space Apps 2026 SI rules, we disclose where AI tools were used:
+
+- **Code and data processing:** parts of the code (web app, Node server, SQL, n8n pipelines, Python analysis and
+  harmonization scripts) were drafted with an AI coding assistant (Claude, by Anthropic) and reviewed, tested and
+  validated by the team. All quantitative results are reproducible with the scripts in `analysis/`.
+- **Text:** research documents, READMEs and the knowledge documents were drafted with AI assistance and reviewed by
+  the team.
+- **In the product:** the Ember assistant runs on a large language model (MiniMax, via LangChain) and uses OpenAI
+  embeddings to search our own documents (`web-hackathon/knowledge/`). The page tells users that Ember can be wrong.
+- No NASA logos or branding were generated or modified with AI.

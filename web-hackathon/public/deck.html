@@ -125,6 +125,13 @@ html.print .cal .c{opacity:1}
 .links{display:flex;flex-direction:column;gap:8px;font:600 23px/1.4 var(--mono)}
 .links a{color:var(--f1);text-decoration:none}
 .si{font:500 17px/1.45 var(--mono);color:var(--t3);margin-top:26px}
+.qr-row{display:flex;align-items:center;gap:28px}
+.qr{display:block;background:#fff;padding:10px;border-radius:12px;width:200px;height:200px;flex:none}
+.qr-row .links{gap:12px}
+.qr-cap{font:600 18px/1.3 var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.qr-title{position:absolute;left:850px;bottom:96px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px}
+.qr-title .qr{width:160px;height:160px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.qr-title .qr-cap{color:var(--t2)}
 #ember-end{position:absolute;right:90px;bottom:90px;width:120px;z-index:2}
 
 /* ---------- reveal ---------- */
@@ -177,12 +184,16 @@ html.print .hud,html.print .nav{display:none}
   <div class="copy">
     <div class="eyebrow rv">NASA Space Apps Challenge 2026</div>
     <h1 class="rv d1"><img class="wordmark" src="brand/ember-atlas.svg" alt="Ember Atlas"></h1>
-    <p class="sub rv d2">A burning calendar for any area in Mexico, from 2001 to this week, built from MODIS and VIIRS together.</p>
+    <p class="sub rv d2">A burning calendar for any area in Mexico or the United States, from 2001 to this week, built from MODIS and VIIRS together.</p>
     <div class="chip rv d3">Harmonization of MODIS and VIIRS Hot Spots</div>
   </div>
   <div class="byline rv d3">
     <b>Team A11, Monterrey</b>
-    <span><span class="todo">TODO: member names</span></span>
+    <span>Leonardo Sáenz · José Ángel Ipiña · Abiel Jefté Ramírez</span>
+  </div>
+  <div class="qr-title rv d3">
+    <img class="qr" src="brand/qr-emberatlas.svg" alt="QR code to emberatlas.ink">
+    <span class="qr-cap">emberatlas.ink</span>
   </div>
 </section>
 
@@ -296,17 +307,21 @@ html.print .hud,html.print .nav{display:none}
       <ul class="todo-list">
         <li>An alert when the current month leaves its normal range</li>
         <li>Show how past forecasts turned out, next to each forecast</li>
-        <li>Countries beyond Mexico</li>
+        <li>More countries, and the full S-NPP chain for the United States</li>
       </ul>
     </div>
     <div class="rv d2">
       <p class="h3">Team A11</p>
-      <div class="team"><span class="todo">TODO: names and roles</span></div>
-      <div class="links">
-        <a href="https://emberatlas.ink" target="_blank" rel="noopener">emberatlas.ink</a>
-        <a href="https://github.com/leonardos4enz/a11-nasa-2026" target="_blank" rel="noopener">github.com/leonardos4enz/a11-nasa-2026</a>
+      <div class="team">Leonardo Sáenz<br>José Ángel Ipiña<br>Abiel Jefté Ramírez</div>
+      <div class="qr-row">
+        <img class="qr" src="brand/qr-emberatlas.svg" alt="QR code to emberatlas.ink">
+        <div class="links">
+          <span class="qr-cap">Scan to try it</span>
+          <a href="https://emberatlas.ink" target="_blank" rel="noopener">emberatlas.ink</a>
+          <a href="https://github.com/leonardos4enz/a11-nasa-2026" target="_blank" rel="noopener">github.com/leonardos4enz/<br>a11-nasa-2026</a>
+        </div>
       </div>
-      <p class="si">Data: NASA FIRMS (MODIS, VIIRS) and CONAFOR. We used AI tools for parts of the code, data processing and text; the team reviewed all of it (details in the README).</p>
+      <p class="si">Data: NASA FIRMS (MODIS, VIIRS), CONAFOR and NIFC. We used AI tools for parts of the code, data processing and text, and the Ember assistant runs on an LLM; the team reviewed all of it (details in the README).</p>
     </div>
   </div>
   <div id="ember-end" aria-hidden="true"></div>
